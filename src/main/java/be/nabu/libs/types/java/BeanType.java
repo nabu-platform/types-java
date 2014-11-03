@@ -323,7 +323,11 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 					}
 					// first check the getter, it may have been mapped to another name
 					try {
-						String mappedName = getIndicatedName(getBeanClass().getDeclaredMethod("get" + name));
+						Method getterMethod = getMethod(getBeanClass(), "get" + name);
+						if (getterMethod == null) {
+							getterMethod = getMethod(getBeanClass(), "is" + name);
+						}
+						String mappedName = getterMethod == null ? null : getIndicatedName(getterMethod);
 						if (mappedName != null) {
 							name = mappedName;
 						}
@@ -332,9 +336,6 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 							name = name.substring(0, 1).toLowerCase() + name.substring(1);					
 						}
 					}
-					catch (NoSuchMethodException e) {
-						// do nothing
-					}
 					catch (SecurityException e) {
 						// do nothing
 					}
@@ -342,10 +343,20 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 				}
 			}
 			String [] propOrder = getPropOrder(getBeanClass());
-			if (propOrder != null)
+			if (propOrder != null) {
 				children = orderChildren(children, propOrder);
+			}
 		}
 		return children;
+	}
+	
+	private Method getMethod(Class<?> clazz, String name) {
+		for (Method method : clazz.getDeclaredMethods()) {
+			if (method.getName().equals(name)) {
+				return method;
+			}
+		}
+		return null;
 	}
 	
 	private Map<String, Element<?>> orderChildren(Map<String, Element<?>> children, String [] propOrder) {

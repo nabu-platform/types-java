@@ -3,7 +3,7 @@
 	<implementation class="be.nabu.libs.types.java.BeanResolver" />
 	
 	<service>
-		<provide interface="be.nabu.libs.types.api.TypeResolver"/>
+		<provide interface="be.nabu.libs.types.api.DefinedTypeResolver"/>
 	</service>
 		
 </scr:component>

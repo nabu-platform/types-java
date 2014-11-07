@@ -50,11 +50,19 @@ public class BeanResolver implements DefinedTypeResolver {
 						}
 					}
 					if (targetType == null) {
+						// first try the thread classloader, it may be correct
 						try {
 							targetType = Thread.currentThread().getContextClassLoader().loadClass(id);
 						}
 						catch (ClassNotFoundException e) {
-							return null;
+							// then try the classloader for this class, you may have enabled DynamicImport-Package
+							// however that setting is useless if you don't use the classloader for this bundle
+							try {
+								targetType = getClass().getClassLoader().loadClass(id);
+							}
+							catch (ClassNotFoundException f) {
+								return null;
+							}
 						}
 					}
 					BeanType<?> beanType = new BeanType(targetType);

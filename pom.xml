@@ -22,8 +22,7 @@
 						<Bundle-Version>1.0.0</Bundle-Version>
 						<Export-Package>${project.groupId}.java</Export-Package>
 						<Service-Component>OSGI-INF/*.xml</Service-Component>
-						<!-- The dynamic import should do the trick -->
-						<!-- <DynamicImport-Package>*</DynamicImport-Package> -->
+						<DynamicImport-Package>*</DynamicImport-Package>
 					</instructions>
 				</configuration>
 			</plugin>

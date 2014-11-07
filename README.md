@@ -27,7 +27,7 @@ It also adds bean resolving to the defined type resolving.
 ## OSGi
 
 This library works without a hitch on a regular JVM with SPI. OSGi is a different story alltogether though.
-The problem is that the library needs to dynamically find classes which is of course rather impossible.
+The problem is that the library needs to dynamically find classes which is of course rather hard.
 
 Suppose this is your hierarchy
 
@@ -63,7 +63,7 @@ import be.nabu.libs.types.java.DomainObjectFactory;
 public class MyObjectFactory implements DomainObjectFactory {
 	@Override
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
-		return Class.forName(name);
+		return getClass().getClassLoader().loadClass(name);
 	}
 }
 ```
@@ -115,5 +115,5 @@ In the pom of this project you will find the following line:
 <DynamicImport-Package>*</DynamicImport-Package>
 ```
 
-The exact explanation of this setting can be fuond here: http://wiki.osgi.org/wiki/DynamicImport-Package
+The exact explanation of this setting can be found here: http://wiki.osgi.org/wiki/DynamicImport-Package.
 For sufficiently small applications, this is by far the easiest option and it is in fact the default.

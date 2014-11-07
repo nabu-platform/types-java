@@ -1,6 +1,8 @@
 package be.nabu.libs.types.java;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import be.nabu.libs.types.api.DefinedType;
@@ -10,7 +12,15 @@ public class BeanResolver implements DefinedTypeResolver {
 
 	private Map<String, DefinedType> resolved = new HashMap<String, DefinedType>();
 	
+	/**
+	 * This keeps track of which factory resolved which bean
+	 * If they are unloaded, their beans are removed
+	 */
+	private Map<DomainObjectFactory, List<String>> factoryResolutions = new HashMap<DomainObjectFactory, List<String>>();
+	
 	private static BeanResolver instance;
+	
+	private List<DomainObjectFactory> objectFactories = new ArrayList<DomainObjectFactory>();
 	
 	public static BeanResolver getInstance() {
 		if (instance == null) {
@@ -23,16 +33,38 @@ public class BeanResolver implements DefinedTypeResolver {
 	@Override
 	public DefinedType resolve(String id) {
 		if (!resolved.containsKey(id)) {
-			try {
-				Class<?> targetType = Thread.currentThread().getContextClassLoader().loadClass(id);
-				BeanType<?> beanType = new BeanType(targetType);
-				if (beanType.isSimpleType())
-					resolved.put(id, new SimpleBeanType(beanType));
-				else
-					resolved.put(id, beanType);
-			}
-			catch (ClassNotFoundException e) {
-				return null;
+			synchronized(this) {
+				if (!resolved.containsKey(id)) {
+					Class<?> targetType = null;
+					// first check domain object factories
+					for (DomainObjectFactory factory : objectFactories) {
+						try {
+							targetType = factory.loadClass(id);
+							if (targetType != null) {
+								factoryResolutions.get(factory).add(id);
+								break;
+							}
+						}
+						catch (ClassNotFoundException e) {
+							// ignore
+						}
+					}
+					if (targetType == null) {
+						try {
+							targetType = Thread.currentThread().getContextClassLoader().loadClass(id);
+						}
+						catch (ClassNotFoundException e) {
+							return null;
+						}
+					}
+					BeanType<?> beanType = new BeanType(targetType);
+					if (beanType.isSimpleType()) {
+						resolved.put(id, new SimpleBeanType(beanType));
+					}
+					else {
+						resolved.put(id, beanType);
+					}
+				}
 			}
 		}
 		return resolved.get(id);
@@ -43,6 +75,19 @@ public class BeanResolver implements DefinedTypeResolver {
 		if (!resolved.containsKey(clazz.getName())) {
 			resolved.put(clazz.getName(), new BeanType(clazz));
 		}
+	}
+	
+	public synchronized void addFactory(DomainObjectFactory factory) {
+		factoryResolutions.put(factory, new ArrayList<String>());
+		objectFactories.add(factory);
+	}
+	
+	public synchronized void removeFactory(DomainObjectFactory factory) {
+		for (String id : factoryResolutions.get(factory)) {
+			resolved.remove(id);
+		}
+		objectFactories.remove(factory);
+		factoryResolutions.remove(factoryResolutions);
 	}
 	
 	@SuppressWarnings("unused")

@@ -46,13 +46,23 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 
 	@SuppressWarnings({ "unchecked" })
 	public BeanInstance(Object instance) {
-		if (instance instanceof Class)
+		if (instance instanceof Class) {
 			throw new IllegalArgumentException("Can not wrap around java.lang.Class");
+		}
 		this.definition = (BeanType<T>) DefinedTypeResolverFactory.getInstance().getResolver().resolve(instance.getClass().getName());
+		// it can not be generally resolved, do a local resolve
+		// TODO: we should move the "statically resolved" from the BeanResolver into the BeanType class
+		// this will allow easy reuse, now the only downside is the repeated reflection
+		if (this.definition == null) {
+			this.definition = new BeanType<T>((Class<T>) instance.getClass());
+		}
 		this.instance = instance;
 	}
 	
 	public BeanInstance(BeanType<T> definition, Object instance) {
+		if (definition == null) {
+			throw new IllegalArgumentException("The definition of the instance " + instance + " can not be null");
+		}
 		this.definition = definition;
 		this.instance = instance;
 	}

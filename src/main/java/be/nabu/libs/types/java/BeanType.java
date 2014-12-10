@@ -33,6 +33,9 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import be.nabu.libs.converter.ConverterFactory;
 import be.nabu.libs.converter.api.Converter;
 import be.nabu.libs.property.ValueUtils;
@@ -94,6 +97,8 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	private Class<T> beanClass;
 	
 	private List<Value<?>> values;
+	
+	private Logger logger = LoggerFactory.getLogger(getClass());
 	
 	/**
 	 * This contains the name of the element that contains the "value"
@@ -171,6 +176,8 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 					if (name.isEmpty())
 						continue;
 					name = name.substring(0, 1).toLowerCase() + name.substring(1);
+					
+					logger.debug("Found getter for: {} in {}", name, getBeanClass());
 					
 					if (getIndicatedName(method) != null)
 						name = getIndicatedName(method);

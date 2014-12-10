@@ -243,7 +243,7 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 				object = collectionHandler.get(object, parsedIndex);
 			}
 			// we just need the field
-			if (path.getChildPath() == null)
+			if (path.getChildPath() == null || object == null)
 				return object;
 			else if (object instanceof BeanInstance)
 				return ((BeanInstance<?>) object).get(path.getChildPath());

@@ -613,7 +613,9 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 
 	@Override
 	public Element<?> get(String path) {
-		return TypeUtils.getChild(this, path);
+		return getChildren().containsKey(path) 
+			? getChildren().get(path)
+			: TypeUtils.getChild(this, path);
 	}
 
 	@Override

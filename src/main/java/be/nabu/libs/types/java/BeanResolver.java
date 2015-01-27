@@ -29,6 +29,10 @@ public class BeanResolver implements DefinedTypeResolver {
 		return instance;
 	}
 	
+	public DefinedType resolve(Class<?> clazz) {
+		return resolve(clazz.getName());
+	}
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public DefinedType resolve(String id) {

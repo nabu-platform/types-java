@@ -456,4 +456,9 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 			original.remove();
 		}
 	}
+
+	@SuppressWarnings("unchecked")
+	public T getInstance() {
+		return (T) instance;
+	}
 }

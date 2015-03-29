@@ -61,6 +61,7 @@ import be.nabu.libs.types.base.ComplexElementImpl;
 import be.nabu.libs.types.base.SimpleElementImpl;
 import be.nabu.libs.types.base.ValueImpl;
 import be.nabu.libs.types.properties.AttributeQualifiedDefaultProperty;
+import be.nabu.libs.types.properties.CollectionHandlerProviderProperty;
 import be.nabu.libs.types.properties.ElementQualifiedDefaultProperty;
 import be.nabu.libs.types.properties.EnumerationProperty;
 import be.nabu.libs.types.properties.FormatProperty;
@@ -299,6 +300,12 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 						element.setProperty(new ValueImpl(new ElementQualifiedDefaultProperty(), isElementQualified(returnType)));
 						element.setProperty(new ValueImpl(new QualifiedProperty(), isElementQualified(getBeanClass())));
 					}
+					
+					// if we have a collection provider, set it as a property for instantiation later
+					if (provider != null) {
+						element.setProperty(new ValueImpl(new CollectionHandlerProviderProperty(), provider));
+					}
+					
 					if (namespace != null)
 						element.setProperty(new ValueImpl(new NamespaceProperty(), namespace));
 					
@@ -307,16 +314,16 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 					// by default nothing is nillable, however in java the default is true
 					// so unless specified otherwise, always set this property
 					if (!isNative && isNillable(method))
-						element.setProperty(new ValueImpl(new NillableProperty(), true));
+						element.setProperty(new ValueImpl(NillableProperty.getInstance(), true));
 				
 					Integer minOccurs = getMinOccurs(method);
 					Integer maxOccurs = getMaxOccurs(method);
 					if (minOccurs != null)
-						element.setProperty(new ValueImpl(new MinOccursProperty(), minOccurs));
+						element.setProperty(new ValueImpl(MinOccursProperty.getInstance(), minOccurs));
 					if (maxOccurs != null)
-						element.setProperty(new ValueImpl(new MaxOccursProperty(), maxOccurs));
+						element.setProperty(new ValueImpl(MaxOccursProperty.getInstance(), maxOccurs));
 					else if (isList)
-						element.setProperty(new ValueImpl(new MaxOccursProperty(), 0));
+						element.setProperty(new ValueImpl(MaxOccursProperty.getInstance(), 0));
 					
 					getters.put(element.getName(), method);
 					

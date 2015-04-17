@@ -306,8 +306,8 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 						element.setProperty(new ValueImpl(new CollectionHandlerProviderProperty(), provider));
 					}
 					
-					if (namespace != null)
-						element.setProperty(new ValueImpl(new NamespaceProperty(), namespace));
+					if (namespace != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(namespace))
+						element.setProperty(new ValueImpl(NamespaceProperty.getInstance(), namespace));
 					
 					if (method.getAnnotation(XmlValue.class) != null)
 						valueElement = element;
@@ -403,7 +403,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 
 	protected void loadName() {
 		XmlRootElement annotation = getBeanClass().getAnnotation(XmlRootElement.class);
-		if (annotation == null || annotation.name().equals("##default")) {
+		if (annotation == null || annotation.name().equals(NamespaceProperty.DEFAULT_NAMESPACE)) {
 			String name = getBeanClass().getName().replaceAll(".*\\.", "");
 			name = name.substring(0, 1).toLowerCase() + name.substring(1);
 			setProperty(new ValueImpl<String>(new NameProperty(), name));
@@ -424,24 +424,24 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 
 	protected void loadNamespace() {
 		XmlRootElement rootAnnotation = getBeanClass().getAnnotation(XmlRootElement.class);
-		if (rootAnnotation != null) {
-			setProperty(new ValueImpl<String>(new NamespaceProperty(), rootAnnotation.namespace()));
+		if (rootAnnotation != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(rootAnnotation.namespace())) {
+			setProperty(new ValueImpl<String>(NamespaceProperty.getInstance(), rootAnnotation.namespace()));
 		}
 		else {
 			XmlSchema annotation = getBeanClass().getPackage() == null ? null : getBeanClass().getPackage().getAnnotation(XmlSchema.class);
-			if (annotation != null) {
-				setProperty(new ValueImpl<String>(new NamespaceProperty(), annotation.namespace()));
+			if (annotation != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(annotation.namespace())) {
+				setProperty(new ValueImpl<String>(NamespaceProperty.getInstance(), annotation.namespace()));
 			}
 		}
 	}
 	
 	@Override
 	public String getNamespace(Value<?>...values) {
-		String valueName = ValueUtils.getValue(new NamespaceProperty(), values);
-		if (valueName != null) {
+		String valueName = ValueUtils.getValue(NamespaceProperty.getInstance(), values);
+		if (valueName != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(valueName)) {
 			return valueName;
 		}
-		return ValueUtils.getValue(new NamespaceProperty(), getProperties());
+		return ValueUtils.getValue(NamespaceProperty.getInstance(), getProperties());
 	}
 	
 	protected String getIndicatedSchemaType(Method method) {
@@ -472,7 +472,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 			XmlAttribute attributeAnnotation = method.getAnnotation(XmlAttribute.class);
 			namespace = attributeAnnotation == null ? null : attributeAnnotation.namespace();
 		}
-		return namespace == null || namespace.equals("##default") ? null : namespace;
+		return namespace == null || namespace.equals(NamespaceProperty.DEFAULT_NAMESPACE) ? null : namespace;
 	}
 
 	protected boolean isElementQualified(Class<?> clazz) {

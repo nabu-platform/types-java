@@ -54,7 +54,7 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 		// TODO: we should move the "statically resolved" from the BeanResolver into the BeanType class
 		// this will allow easy reuse, now the only downside is the repeated reflection
 		if (this.definition == null) {
-			this.definition = new BeanType<T>((Class<T>) instance.getClass());
+			this.definition = (BeanType<T>) BeanResolver.getInstance().resolve((Class<T>) instance.getClass());
 		}
 		this.instance = instance;
 	}

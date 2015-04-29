@@ -154,204 +154,209 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Map<String, Element<?>> getChildren() {
 		if (children == null) {
-			children = new LinkedHashMap<String, Element<?>>();
-			SimpleTypeWrapper wrapper = SimpleTypeWrapperFactory.getInstance().getWrapper();
-			// this only lists the methods that are actually implemented by this class, not those that are inherited
-			for (Method method : getBeanClass().getDeclaredMethods()) {
-				if (Modifier.isPublic(method.getModifiers()) && (method.getName().startsWith("get") || method.getName().startsWith("is"))) {
-					// only methods that do not take parameters
-					if (method.getParameterTypes().length > 0)
-						continue;
-					// this is inherent in every object, do not use
-					else if (method.getName().equals("getClass"))
-						continue;
-					// we need a return type for a getter
-					else if (method.getReturnType() == null)
-						continue;
-					// check that it shouldn't be ignored
-					else if (method.getAnnotation(XmlTransient.class) != null)
-						continue;
-					
-					String name = method.getName().substring(method.getName().startsWith("get") ? 3 : 2).trim() ;
-					if (name.isEmpty())
-						continue;
-					name = name.substring(0, 1).toLowerCase() + name.substring(1);
-					
-					logger.debug("Found getter for: {} in {}", name, getBeanClass());
-					
-					if (getIndicatedName(method) != null)
-						name = getIndicatedName(method);
-					
-					String namespace = getNamespace(method);
-
-					Class<?> returnType = method.getReturnType();
-					
-					// need to know if it's native (it can not be null then)
-					boolean isNative = false;
-					// box primitives, they can not be wrapped by simpletype anyway
-					if (returnType.getName().equals("int")) {
-						returnType = Integer.class;
-						isNative = true;
-					}
-					else if (returnType.getName().equals("float")) {
-						returnType = Float.class;
-						isNative = true;
-					}
-					else if (returnType.getName().equals("double")) {
-						returnType = Double.class;
-						isNative = true;
-					}
-					else if (returnType.getName().equals("char")) {
-						returnType = Character.class;
-						isNative = true;
-					}
-					else if (returnType.getName().equals("short")) {
-						returnType = Short.class;
-						isNative = true;
-					}
-					else if (returnType.getName().equals("long")) {
-						returnType = Long.class;
-						isNative = true;
-					}
-					else if (returnType.getName().equals("byte")) {
-						returnType = Byte.class;
-						isNative = true;
-					}
-					else if (returnType.getName().equals("boolean")) {
-						returnType = Boolean.class;
-						isNative = true;
-					}
-					
-					// the actual type must be preserved, mostly for collection management
-					actualTypes.put(name, returnType);
-
-					boolean isList = false;
-					CollectionHandlerProvider provider = getCollectionHandler().getHandler(returnType);
-					// if it is a list, we need the actual type
-					if (provider != null) {
-						isList = true;
-						returnType = provider.getComponentType(method.getGenericReturnType());
-					}
-
-					Element<?> element = null;
-					
-					SimpleType<?> simpleType = wrapper.wrap(returnType);
-					if (simpleType != null) {
-						if (isAttribute(method)) {
-							element = new AttributeImpl(name, simpleType, this);
-							element.setProperty(new ValueImpl(new QualifiedProperty(), isAttributeQualified(getBeanClass())));
-						}
-						else {
-							element = new SimpleElementImpl(name, simpleType, this);
-							element.setProperty(new ValueImpl(new QualifiedProperty(), isElementQualified(getBeanClass())));
-						}
-						// get min/max
-						Long min = getMin(method);
-						Long max = getMax(method);
-						String minDecimal = getMinDecimal(method);
-						String maxDecimal = getMaxDecimal(method);
-						Integer minLength = getMinLength(method);
-						Integer maxLength = getMaxLength(method);
-						
-						// if min and max are the same, express it as length
-						if (minLength != null && maxLength != null && minLength.equals(maxLength))
-							element.setProperty(new ValueImpl(new LengthProperty(), minLength));
-						else {
-							if (minLength != null)
-								element.setProperty(new ValueImpl(new MinLengthProperty(), minLength));
-							if (maxLength != null)
-								element.setProperty(new ValueImpl(new MaxLengthProperty(), maxLength));
-						}
-						
-						String pattern = getPattern(method);
-						if (pattern != null)
-							element.setProperty(new ValueImpl(new PatternProperty(), pattern));
-						
-						// if it's a java.util.date (or extension), check for a schema element type name
-						if (Date.class.isAssignableFrom(returnType)) {
-							String indicatedSchemaType = getIndicatedSchemaType(method);
-							if (indicatedSchemaType != null && XSDFormat.getXSDFormat(indicatedSchemaType) != null) {
-								element.setProperty(new ValueImpl(new FormatProperty(), indicatedSchemaType));
+			synchronized(this) {
+				if (children == null) {
+					Map<String, Element<?>> children = new LinkedHashMap<String, Element<?>>();
+					SimpleTypeWrapper wrapper = SimpleTypeWrapperFactory.getInstance().getWrapper();
+					// this only lists the methods that are actually implemented by this class, not those that are inherited
+					for (Method method : getBeanClass().getDeclaredMethods()) {
+						if (Modifier.isPublic(method.getModifiers()) && (method.getName().startsWith("get") || method.getName().startsWith("is"))) {
+							// only methods that do not take parameters
+							if (method.getParameterTypes().length > 0)
+								continue;
+							// this is inherent in every object, do not use
+							else if (method.getName().equals("getClass"))
+								continue;
+							// we need a return type for a getter
+							else if (method.getReturnType() == null)
+								continue;
+							// check that it shouldn't be ignored
+							else if (method.getAnnotation(XmlTransient.class) != null)
+								continue;
+							
+							String name = method.getName().substring(method.getName().startsWith("get") ? 3 : 2).trim() ;
+							if (name.isEmpty())
+								continue;
+							name = name.substring(0, 1).toLowerCase() + name.substring(1);
+							
+							logger.debug("Found getter for: {} in {}", name, getBeanClass());
+							
+							if (getIndicatedName(method) != null)
+								name = getIndicatedName(method);
+							
+							String namespace = getNamespace(method);
+		
+							Class<?> returnType = method.getReturnType();
+							
+							// need to know if it's native (it can not be null then)
+							boolean isNative = false;
+							// box primitives, they can not be wrapped by simpletype anyway
+							if (returnType.getName().equals("int")) {
+								returnType = Integer.class;
+								isNative = true;
 							}
-						}
-						Boolean isFuture = isFuture(method);
-						Boolean isPast = isPast(method);
-						if (isFuture != null && isFuture)
-							element.setProperty(new ValueImpl(new TimeBlockProperty(), TimeBlock.FUTURE));
-						else if (isPast != null && isPast)
-							element.setProperty(new ValueImpl(new TimeBlockProperty(), TimeBlock.PAST));
+							else if (returnType.getName().equals("float")) {
+								returnType = Float.class;
+								isNative = true;
+							}
+							else if (returnType.getName().equals("double")) {
+								returnType = Double.class;
+								isNative = true;
+							}
+							else if (returnType.getName().equals("char")) {
+								returnType = Character.class;
+								isNative = true;
+							}
+							else if (returnType.getName().equals("short")) {
+								returnType = Short.class;
+								isNative = true;
+							}
+							else if (returnType.getName().equals("long")) {
+								returnType = Long.class;
+								isNative = true;
+							}
+							else if (returnType.getName().equals("byte")) {
+								returnType = Byte.class;
+								isNative = true;
+							}
+							else if (returnType.getName().equals("boolean")) {
+								returnType = Boolean.class;
+								isNative = true;
+							}
+							
+							// the actual type must be preserved, mostly for collection management
+							actualTypes.put(name, returnType);
+		
+							boolean isList = false;
+							CollectionHandlerProvider provider = getCollectionHandler().getHandler(returnType);
+							// if it is a list, we need the actual type
+							if (provider != null) {
+								isList = true;
+								returnType = provider.getComponentType(method.getGenericReturnType());
+							}
+		
+							Element<?> element = null;
+							
+							SimpleType<?> simpleType = wrapper.wrap(returnType);
+							if (simpleType != null) {
+								if (isAttribute(method)) {
+									element = new AttributeImpl(name, simpleType, this);
+									element.setProperty(new ValueImpl(new QualifiedProperty(), isAttributeQualified(getBeanClass())));
+								}
+								else {
+									element = new SimpleElementImpl(name, simpleType, this);
+									element.setProperty(new ValueImpl(new QualifiedProperty(), isElementQualified(getBeanClass())));
+								}
+								// get min/max
+								Long min = getMin(method);
+								Long max = getMax(method);
+								String minDecimal = getMinDecimal(method);
+								String maxDecimal = getMaxDecimal(method);
+								Integer minLength = getMinLength(method);
+								Integer maxLength = getMaxLength(method);
+								
+								// if min and max are the same, express it as length
+								if (minLength != null && maxLength != null && minLength.equals(maxLength))
+									element.setProperty(new ValueImpl(new LengthProperty(), minLength));
+								else {
+									if (minLength != null)
+										element.setProperty(new ValueImpl(new MinLengthProperty(), minLength));
+									if (maxLength != null)
+										element.setProperty(new ValueImpl(new MaxLengthProperty(), maxLength));
+								}
+								
+								String pattern = getPattern(method);
+								if (pattern != null)
+									element.setProperty(new ValueImpl(new PatternProperty(), pattern));
+								
+								// if it's a java.util.date (or extension), check for a schema element type name
+								if (Date.class.isAssignableFrom(returnType)) {
+									String indicatedSchemaType = getIndicatedSchemaType(method);
+									if (indicatedSchemaType != null && XSDFormat.getXSDFormat(indicatedSchemaType) != null) {
+										element.setProperty(new ValueImpl(new FormatProperty(), indicatedSchemaType));
+									}
+								}
+								Boolean isFuture = isFuture(method);
+								Boolean isPast = isPast(method);
+								if (isFuture != null && isFuture)
+									element.setProperty(new ValueImpl(new TimeBlockProperty(), TimeBlock.FUTURE));
+								else if (isPast != null && isPast)
+									element.setProperty(new ValueImpl(new TimeBlockProperty(), TimeBlock.PAST));
+								
+								Converter converter = ConverterFactory.getInstance().getConverter(); 
+								if (min != null)
+									element.setProperty(new ValueImpl(new MinInclusiveProperty(), converter.convert(min, returnType)));
+								else if (minDecimal != null)
+									element.setProperty(new ValueImpl(new MinInclusiveProperty(), converter.convert(minDecimal, returnType)));
+								
+								if (max != null)
+									element.setProperty(new ValueImpl(new MaxInclusiveProperty(), converter.convert(max, returnType)));
+								else if (maxDecimal != null)
+									element.setProperty(new ValueImpl(new MaxInclusiveProperty(), converter.convert(maxDecimal, returnType)));
+							}
+							else {
+								element = new ComplexElementImpl(name, (ComplexType) DefinedTypeResolverFactory.getInstance().getResolver()
+											.resolve(returnType.getName()), this);
+								element.setProperty(new ValueImpl(new AttributeQualifiedDefaultProperty(), isAttributeQualified(returnType)));
+								element.setProperty(new ValueImpl(new ElementQualifiedDefaultProperty(), isElementQualified(returnType)));
+								element.setProperty(new ValueImpl(new QualifiedProperty(), isElementQualified(getBeanClass())));
+							}
+							if (namespace != null)
+								element.setProperty(new ValueImpl(new NamespaceProperty(), namespace));
+							
+							if (method.getAnnotation(XmlValue.class) != null)
+								valueElement = element;
+							// by default nothing is nillable, however in java the default is true
+							// so unless specified otherwise, always set this property
+							if (!isNative && isNillable(method))
+								element.setProperty(new ValueImpl(new NillableProperty(), true));
 						
-						Converter converter = ConverterFactory.getInstance().getConverter(); 
-						if (min != null)
-							element.setProperty(new ValueImpl(new MinInclusiveProperty(), converter.convert(min, returnType)));
-						else if (minDecimal != null)
-							element.setProperty(new ValueImpl(new MinInclusiveProperty(), converter.convert(minDecimal, returnType)));
-						
-						if (max != null)
-							element.setProperty(new ValueImpl(new MaxInclusiveProperty(), converter.convert(max, returnType)));
-						else if (maxDecimal != null)
-							element.setProperty(new ValueImpl(new MaxInclusiveProperty(), converter.convert(maxDecimal, returnType)));
+							Integer minOccurs = getMinOccurs(method);
+							Integer maxOccurs = getMaxOccurs(method);
+							if (minOccurs != null)
+								element.setProperty(new ValueImpl(new MinOccursProperty(), minOccurs));
+							if (maxOccurs != null)
+								element.setProperty(new ValueImpl(new MaxOccursProperty(), maxOccurs));
+							else if (isList)
+								element.setProperty(new ValueImpl(new MaxOccursProperty(), 0));
+							
+							getters.put(element.getName(), method);
+							
+							children.put(element.getName(), element);
+						}
+						// there might be more getters than setters with the following code but it doesn't matter as they won't get called
+						else if (method.getName().startsWith("set")) {
+							String name = method.getName().substring(3).trim();
+							if (name.isEmpty()) {
+								continue;
+							}
+							// first check the getter, it may have been mapped to another name
+							try {
+								Method getterMethod = getMethod(getBeanClass(), "get" + name);
+								if (getterMethod == null) {
+									getterMethod = getMethod(getBeanClass(), "is" + name);
+								}
+								String mappedName = getterMethod == null ? null : getIndicatedName(getterMethod);
+								if (mappedName != null) {
+									name = mappedName;
+								}
+								// if not mapped, camelcase it
+								else {
+									name = name.substring(0, 1).toLowerCase() + name.substring(1);					
+								}
+							}
+							catch (SecurityException e) {
+								// do nothing
+							}
+							setters.put(name, method);
+						}
 					}
-					else {
-						element = new ComplexElementImpl(name, (ComplexType) DefinedTypeResolverFactory.getInstance().getResolver()
-									.resolve(returnType.getName()), this);
-						element.setProperty(new ValueImpl(new AttributeQualifiedDefaultProperty(), isAttributeQualified(returnType)));
-						element.setProperty(new ValueImpl(new ElementQualifiedDefaultProperty(), isElementQualified(returnType)));
-						element.setProperty(new ValueImpl(new QualifiedProperty(), isElementQualified(getBeanClass())));
+					String [] propOrder = getPropOrder(getBeanClass());
+					if (propOrder != null) {
+						children = orderChildren(children, propOrder);
 					}
-					if (namespace != null)
-						element.setProperty(new ValueImpl(new NamespaceProperty(), namespace));
-					
-					if (method.getAnnotation(XmlValue.class) != null)
-						valueElement = element;
-					// by default nothing is nillable, however in java the default is true
-					// so unless specified otherwise, always set this property
-					if (!isNative && isNillable(method))
-						element.setProperty(new ValueImpl(new NillableProperty(), true));
-				
-					Integer minOccurs = getMinOccurs(method);
-					Integer maxOccurs = getMaxOccurs(method);
-					if (minOccurs != null)
-						element.setProperty(new ValueImpl(new MinOccursProperty(), minOccurs));
-					if (maxOccurs != null)
-						element.setProperty(new ValueImpl(new MaxOccursProperty(), maxOccurs));
-					else if (isList)
-						element.setProperty(new ValueImpl(new MaxOccursProperty(), 0));
-					
-					getters.put(element.getName(), method);
-					
-					children.put(element.getName(), element);
+					this.children = children;
 				}
-				// there might be more getters than setters with the following code but it doesn't matter as they won't get called
-				else if (method.getName().startsWith("set")) {
-					String name = method.getName().substring(3).trim();
-					if (name.isEmpty()) {
-						continue;
-					}
-					// first check the getter, it may have been mapped to another name
-					try {
-						Method getterMethod = getMethod(getBeanClass(), "get" + name);
-						if (getterMethod == null) {
-							getterMethod = getMethod(getBeanClass(), "is" + name);
-						}
-						String mappedName = getterMethod == null ? null : getIndicatedName(getterMethod);
-						if (mappedName != null) {
-							name = mappedName;
-						}
-						// if not mapped, camelcase it
-						else {
-							name = name.substring(0, 1).toLowerCase() + name.substring(1);					
-						}
-					}
-					catch (SecurityException e) {
-						// do nothing
-					}
-					setters.put(name, method);
-				}
-			}
-			String [] propOrder = getPropOrder(getBeanClass());
-			if (propOrder != null) {
-				children = orderChildren(children, propOrder);
 			}
 		}
 		return children;

@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>be.nabu.libs.types</groupId>
 	<artifactId>types-java</artifactId>
@@ -40,22 +41,17 @@
 		<dependency>
 			<groupId>be.nabu.libs.artifacts</groupId>
 			<artifactId>artifacts-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>be.nabu.libs.converter</groupId>
 			<artifactId>converter-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>be.nabu.libs.converter</groupId>
 			<artifactId>converter-base</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>be.nabu.libs.property</groupId>
-			<artifactId>property-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>be.nabu.libs.types</groupId>
@@ -66,16 +62,6 @@
 			<groupId>be.nabu.libs.types</groupId>
 			<artifactId>types-base</artifactId>
 			<version>1.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>be.nabu.libs.validator</groupId>
-			<artifactId>validator-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>be.nabu.libs.validator</groupId>
-			<artifactId>validator-base</artifactId>
-			<version>1.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

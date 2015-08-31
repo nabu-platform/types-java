@@ -1,5 +1,6 @@
 package be.nabu.libs.types.java;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
@@ -616,6 +617,11 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 			return ((BeanType<?>) getSuperType()).getGetter(name);
 		else
 			return getters.get(name);
+	}
+	
+	public Annotation[] getAnnotations(String name) {
+		Method getter = getGetter(name);
+		return getter == null ? null : getter.getAnnotations();
 	}
 	
 	@Override

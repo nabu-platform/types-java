@@ -13,6 +13,7 @@ import be.nabu.libs.converter.ConverterFactory;
 import be.nabu.libs.converter.api.Converter;
 import be.nabu.libs.types.BaseTypeInstance;
 import be.nabu.libs.types.CollectionHandlerFactory;
+import be.nabu.libs.types.ComplexContentWrapperFactory;
 import be.nabu.libs.types.DefinedTypeResolverFactory;
 import be.nabu.libs.types.ParsedPath;
 import be.nabu.libs.types.SimpleTypeWrapperFactory;
@@ -159,7 +160,7 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 				else {
 					Object singleObject = collectionHandler.get(listObject, parsedIndex);
 					if (!(singleObject instanceof ComplexContent))
-						singleObject = new BeanInstance(singleObject);
+						singleObject = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(singleObject);
 					((ComplexContent) singleObject).set(path.getChildPath().toString(), value);
 				}
 			}
@@ -180,7 +181,7 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 					getType().getSetter(pathName).invoke(instance, singleObject);
 				}
 				if (!(singleObject instanceof ComplexContent))
-					singleObject = new BeanInstance(singleObject);
+					singleObject = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(singleObject);
 				((ComplexContent) singleObject).set(path.getChildPath().toString(), value);
 			}
 		}

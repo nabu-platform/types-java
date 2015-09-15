@@ -102,6 +102,8 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	
 	private Logger logger = LoggerFactory.getLogger(getClass());
 	
+	private boolean allowVarargsGetters = true;
+	
 	/**
 	 * This contains the name of the element that contains the "value"
 	 * If this is present, all other children must be attributes and if so, it really should be exposed as a simple complex type
@@ -163,8 +165,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 					// this only lists the methods that are actually implemented by this class, not those that are inherited
 					for (Method method : getBeanClass().getDeclaredMethods()) {
 						if (Modifier.isPublic(method.getModifiers()) && (method.getName().startsWith("get") || method.getName().startsWith("is"))) {
+							// it is possible to have 1 parameter which is a varargs in which case we can call the get without any data
+							boolean isVarargsGetter = method.getParameterCount() == 1 && method.isVarArgs();
 							// only methods that do not take parameters
-							if (method.getParameterTypes().length > 0)
+							if ((!isVarargsGetter || !allowVarargsGetters) && method.getParameterTypes().length > 0)
 								continue;
 							// this is inherent in every object, do not use
 							else if (method.getName().equals("getClass"))

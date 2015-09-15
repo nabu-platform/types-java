@@ -235,7 +235,10 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 			throw new IllegalArgumentException("The field " + pathName + " is not a complex type");
 		
 		try {
-			Object object = getType().getGetter(pathName).invoke(instance);
+			Method getter = getType().getGetter(pathName);
+			Object object = getter.getParameterCount() == 1
+				? getter.invoke(instance, new Object[] { Array.newInstance((Class<?>) getter.getParameterTypes()[0].getComponentType(), 0) }) 
+				: getter.invoke(instance);
 			if (path.getIndex() != null) {
 				CollectionHandlerProvider collectionHandler = getCollectionHandler().getHandler(object.getClass());
 				if (collectionHandler == null)

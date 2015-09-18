@@ -52,8 +52,6 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 		}
 		this.definition = (BeanType<T>) DefinedTypeResolverFactory.getInstance().getResolver().resolve(instance.getClass().getName());
 		// it can not be generally resolved, do a local resolve
-		// TODO: we should move the "statically resolved" from the BeanResolver into the BeanType class
-		// this will allow easy reuse, now the only downside is the repeated reflection
 		if (this.definition == null) {
 			this.definition = (BeanType<T>) BeanResolver.getInstance().resolve((Class<T>) instance.getClass());
 		}

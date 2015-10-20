@@ -598,7 +598,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	@Override
 	public BeanInstance<T> newInstance() {
 		if (getBeanClass().isInterface())
-			return new BeanInstance<T>(this, Proxy.newProxyInstance(getBeanClass().getClassLoader(), new Class<?> [] { getBeanClass() }, new BeanInterfaceInstance()));
+			return new BeanInstance<T>(this, Proxy.newProxyInstance(getBeanClass().getClassLoader(), new Class<?> [] { getBeanClass(), SneakyEditableBeanInstance.class }, new BeanInterfaceInstance()));
 		else {
 			try {
 				return new BeanInstance<T>(this, getBeanClass().newInstance());

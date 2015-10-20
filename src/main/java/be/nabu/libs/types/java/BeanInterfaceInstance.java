@@ -21,6 +21,11 @@ public class BeanInterfaceInstance implements InvocationHandler {
 			values.put(name, args[0]);
 			return null;
 		}
+		// sneaky set!
+		else if (name.equals("__set") && args.length == 2) {
+			values.put((String) args[0], args[1]);
+			return null;
+		}
 		else
 			throw new UnsupportedOperationException(method.getName());
 	}

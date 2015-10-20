@@ -111,6 +111,30 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 		return this.handler;
 	}
 	
+	private void setValue(Object instance, String field, Object value) throws IllegalAccessException, InvocationTargetException {
+		Method setter = getType().getSetter(field);
+		if (setter == null) {
+			if (instance instanceof SneakyEditableBeanInstance) {
+				// we need to know the name of the getter to do a sneaky set
+				Method getter = getType().getGetter(field);
+				if (getter != null) {
+					String name = getter.getName().startsWith("is") ? getter.getName().substring(2) : getter.getName().substring(3);
+					name = name.substring(0, 1).toLowerCase() + name.substring(1);
+					((SneakyEditableBeanInstance) instance).__set(name, value);
+				}
+				else {
+					throw new RuntimeException("No getter found for field '" + field + "', no sneaky set possible");
+				}
+			}
+			else {
+				throw new RuntimeException("No setter found for field '" + field + "' and object is not sneaky editable");
+			}
+		}
+		else {
+			setter.invoke(instance, value);
+		}
+	}
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	void set(ParsedPath path, Object value) {
 		boolean isAttribute = path.getName().startsWith("@");
@@ -142,17 +166,12 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 					// the size only matters if it is integer-based index
 					listObject = collectionHandler.create(actualType, parsedIndex instanceof Integer ? ((Integer) parsedIndex) + 1 : 1);
 					// set it in the object
-					getType().getSetter(pathName).invoke(instance, listObject);
+					setValue(instance, pathName, listObject);
 				}				
 				// we need to update locally
 				if (path.getChildPath() == null) {
 					value = convert(value, collectionHandler.getComponentType(getType().getGenericType(pathName)), definition);
-					Method setter = getType().getSetter(pathName);
-					if (setter == null) {
-						throw new IllegalArgumentException("There is no setter for " + pathName + " in " + getType().getBeanClass());
-					}
-					setter.invoke(instance,
-						collectionHandler.set(listObject, parsedIndex, value));
+					setValue(instance, pathName, collectionHandler.set(listObject, parsedIndex, value));
 				}
 				// otherwise we need to recurse
 				else {
@@ -165,18 +184,14 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 			// just update the field
 			else if (path.getChildPath() == null) {
 				value = convert(value, getType().getActualType(pathName), definition);
-				Method setter = getType().getSetter(pathName);
-				if (setter == null) {
-					throw new IllegalArgumentException("No setter found for field: " + pathName);
-				}
-				setter.invoke(instance, value);
+				setValue(instance, pathName, value);
 			}
 			else {
 				// we need to recurse
 				Object singleObject = getType().getGetter(pathName).invoke(instance);
 				if (singleObject == null) {
 					singleObject = getType().getActualType(pathName).newInstance();
-					getType().getSetter(pathName).invoke(instance, singleObject);
+					setValue(instance, pathName, singleObject);
 				}
 				if (!(singleObject instanceof ComplexContent))
 					singleObject = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(singleObject);

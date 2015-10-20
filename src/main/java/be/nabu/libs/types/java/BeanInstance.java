@@ -253,10 +253,10 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 				return new BeanInstance((BeanType<?>) definition.getType(), object).get(path.getChildPath());
 		}
 		catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Can not access path: " + path, e);
 		} 
 		catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Can not access path: " + path, e);
 		}
 	}
 

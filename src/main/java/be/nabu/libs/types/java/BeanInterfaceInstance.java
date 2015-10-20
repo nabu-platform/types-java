@@ -12,7 +12,7 @@ public class BeanInterfaceInstance implements InvocationHandler {
 	@Override
 	public Object invoke(Object instance, Method method, Object[] args) throws Throwable {
 		String name = method.getName();
-		if (name.startsWith("get") && (args == null || args.length == 0)) {
+		if ((name.startsWith("get") || name.startsWith("is")) && (args == null || args.length == 0 || (args.length == 1 && method.isVarArgs()))) {
 			name = getVariableName(name);
 			return values.get(name);
 		}
@@ -26,7 +26,7 @@ public class BeanInterfaceInstance implements InvocationHandler {
 	}
 
 	private String getVariableName(String name) {
-		name = name.substring(3);
+		name = name.startsWith("get") ? name.substring(3) : name.substring(2);
 		if (name.isEmpty())
 			return null;
 		else

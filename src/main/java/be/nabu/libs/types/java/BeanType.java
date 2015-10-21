@@ -238,7 +238,36 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 							// if it is a list, we need the actual type
 							if (provider != null) {
 								isList = true;
-								returnType = provider.getComponentType(method.getGenericReturnType());
+								try {
+									returnType = provider.getComponentType(method.getGenericReturnType());
+								}
+								catch (IllegalArgumentException e) {
+									// proxies don't inherit the generic information from their interfaces, check the interfaces to see if we can find the component type
+									Class<?>[] interfaces = getBeanClass().getInterfaces();
+									boolean foundInInterfaces = false;
+									if (interfaces != null) {
+										for (Class<?> clazz : interfaces) {
+											try {
+												Method methodInterface = clazz.getMethod(method.getName(), method.getParameterTypes());
+												returnType = provider.getComponentType(methodInterface.getGenericReturnType());
+												foundInInterfaces = true;
+											}
+											catch (NoSuchMethodException e1) {
+												// ignore
+											}
+											catch (SecurityException e1) {
+												// ignore
+											}
+											// couldn't extract it, stop
+											catch (IllegalArgumentException e1) {
+												break;
+											}
+										}
+									}
+									if (!foundInInterfaces) {
+										throw new IllegalArgumentException("Can not get the component type for field '" + name + "': " + method, e);
+									}
+								}
 							}
 		
 							Element<?> element = null;

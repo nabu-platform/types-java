@@ -26,8 +26,10 @@ public class BeanInterfaceInstance implements InvocationHandler {
 			values.put((String) args[0], args[1]);
 			return null;
 		}
-		else
-			throw new UnsupportedOperationException(method.getName());
+		// allow for default methods like 'toString()'
+		else {
+			return method.invoke(this, args);
+		}
 	}
 
 	private String getVariableName(String name) {

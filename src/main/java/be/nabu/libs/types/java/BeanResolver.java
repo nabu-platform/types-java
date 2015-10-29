@@ -11,6 +11,7 @@ import be.nabu.libs.types.api.DefinedTypeResolver;
 public class BeanResolver implements DefinedTypeResolver {
 
 	private Map<String, DefinedType> resolved = new HashMap<String, DefinedType>();
+	private Map<Class<?>, BeanType<?>> resolvedClasses = new HashMap<Class<?>, BeanType<?>>();
 	
 	/**
 	 * This keeps track of which factory resolved which bean
@@ -29,8 +30,18 @@ public class BeanResolver implements DefinedTypeResolver {
 		return instance;
 	}
 	
+	public BeanResolver() {
+		if (instance == null) {
+			instance = this;
+		}
+	}
+		
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public DefinedType resolve(Class<?> clazz) {
-		return resolve(clazz.getName());
+		if (!resolvedClasses.containsKey(clazz)) {
+			resolvedClasses.put(clazz, new BeanType(clazz));
+		}
+		return resolvedClasses.get(clazz);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -84,12 +95,16 @@ public class BeanResolver implements DefinedTypeResolver {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void register(Class<?> clazz) {
+		if (!resolvedClasses.containsKey(clazz)) {
+			resolvedClasses.put(clazz, new BeanType(clazz));
+		}
 		if (!resolved.containsKey(clazz.getName())) {
-			resolved.put(clazz.getName(), new BeanType(clazz));
+			resolved.put(clazz.getName(), resolvedClasses.containsKey(clazz) ? resolvedClasses.get(clazz) : new BeanType(clazz));
 		}
 	}
 	
 	public synchronized void addFactory(DomainObjectFactory factory) {
+		System.out.println("[" + this + " - " + this.getClass().getClassLoader() + "] Registering factory " + factory);
 		factoryResolutions.put(factory, new ArrayList<String>());
 		objectFactories.add(factory);
 	}

@@ -14,7 +14,6 @@ import be.nabu.libs.converter.api.Converter;
 import be.nabu.libs.types.BaseTypeInstance;
 import be.nabu.libs.types.CollectionHandlerFactory;
 import be.nabu.libs.types.ComplexContentWrapperFactory;
-import be.nabu.libs.types.DefinedTypeResolverFactory;
 import be.nabu.libs.types.ParsedPath;
 import be.nabu.libs.types.SimpleTypeWrapperFactory;
 import be.nabu.libs.types.TypeConverterFactory;
@@ -50,11 +49,7 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 		if (instance instanceof Class) {
 			throw new IllegalArgumentException("Can not wrap around java.lang.Class");
 		}
-		this.definition = (BeanType<T>) DefinedTypeResolverFactory.getInstance().getResolver().resolve(instance.getClass().getName());
-		// it can not be generally resolved, do a local resolve
-		if (this.definition == null) {
-			this.definition = (BeanType<T>) BeanResolver.getInstance().resolve((Class<T>) instance.getClass());
-		}
+		this.definition = (BeanType<T>) BeanResolver.getInstance().resolve((Class<T>) instance.getClass());
 		this.instance = instance;
 	}
 	

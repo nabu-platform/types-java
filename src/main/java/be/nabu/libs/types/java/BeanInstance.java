@@ -242,8 +242,8 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 		if (path.getChildPath() != null && !(definition.getType() instanceof ComplexType))
 			throw new IllegalArgumentException("The field " + pathName + " is not a complex type");
 		
+		Method getter = getType().getGetter(pathName);
 		try {
-			Method getter = getType().getGetter(pathName);
 			Object object = getter.getParameterCount() == 1
 				? getter.invoke(instance, new Object[] { Array.newInstance((Class<?>) getter.getParameterTypes()[0].getComponentType(), 0) }) 
 				: getter.invoke(instance);
@@ -267,6 +267,9 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 		} 
 		catch (IllegalAccessException e) {
 			throw new RuntimeException("Can not access path: " + path, e);
+		}
+		catch (RuntimeException e) {
+			throw new RuntimeException("Can not access path: " + path + " using " + getter.getDeclaringClass().getClassLoader() + " on " + instance.getClass().getClassLoader(), e);
 		}
 	}
 

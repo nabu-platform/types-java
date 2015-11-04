@@ -27,6 +27,7 @@ import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.TypeConverter;
 import be.nabu.libs.types.api.TypeInstance;
+import be.nabu.libs.types.api.WrappedComplexContent;
 
 /**
  * When you request a field from a bean instance and the resulting field is itself complex you could expect two things:
@@ -36,7 +37,7 @@ import be.nabu.libs.types.api.TypeInstance;
  *  Depending on the context both are valid options but it is easier/less overhead to wrap manually than to unwrap manually
  *  Hence the tools are provided for easy wrapping but you need to do it yourself
  */
-public class BeanInstance<T> implements ComplexContent, BeanConvertible {
+public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T> {
 
 	private BeanType<T> definition;
 	private Object instance;
@@ -473,7 +474,8 @@ public class BeanInstance<T> implements ComplexContent, BeanConvertible {
 	}
 
 	@SuppressWarnings("unchecked")
-	public T getInstance() {
+	@Override
+	public T getUnwrapped() {
 		return (T) instance;
 	}
 }

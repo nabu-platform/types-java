@@ -42,7 +42,6 @@ import be.nabu.libs.converter.api.Converter;
 import be.nabu.libs.property.ValueUtils;
 import be.nabu.libs.property.api.Value;
 import be.nabu.libs.types.CollectionHandlerFactory;
-import be.nabu.libs.types.DefinedTypeResolverFactory;
 import be.nabu.libs.types.SimpleTypeWrapperFactory;
 import be.nabu.libs.types.TypeUtils;
 import be.nabu.libs.types.TypeUtils.ComplexTypeValidator;
@@ -330,8 +329,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 									element.setProperty(new ValueImpl(new MaxInclusiveProperty(), converter.convert(maxDecimal, returnType)));
 							}
 							else {
-								element = new ComplexElementImpl(name, (ComplexType) DefinedTypeResolverFactory.getInstance().getResolver()
-											.resolve(returnType.getName()), this);
+								element = new ComplexElementImpl(name, (ComplexType) BeanResolver.getInstance().resolve(returnType), this);
 								element.setProperty(new ValueImpl(new AttributeQualifiedDefaultProperty(), isAttributeQualified(returnType)));
 								element.setProperty(new ValueImpl(new ElementQualifiedDefaultProperty(), isElementQualified(returnType)));
 								element.setProperty(new ValueImpl(new QualifiedProperty(), isElementQualified(getBeanClass())));

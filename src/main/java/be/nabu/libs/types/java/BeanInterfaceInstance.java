@@ -1,12 +1,15 @@
 package be.nabu.libs.types.java;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BeanInterfaceInstance implements InvocationHandler {
+public class BeanInterfaceInstance implements InvocationHandler, Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	private Map<String, Object> values = new HashMap<String, Object>();
 	
 	@Override

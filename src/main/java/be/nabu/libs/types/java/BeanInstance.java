@@ -245,7 +245,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		
 		Method getter = getType().getGetter(pathName);
 		try {
-			Object object = getter.getParameterCount() == 1
+			Object object = getter.getParameterTypes().length == 1
 				? getter.invoke(instance, new Object[] { Array.newInstance((Class<?>) getter.getParameterTypes()[0].getComponentType(), 0) }) 
 				: getter.invoke(instance);
 			if (path.getIndex() != null) {

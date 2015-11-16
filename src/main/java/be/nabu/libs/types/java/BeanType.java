@@ -165,7 +165,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 					for (Method method : getBeanClass().getDeclaredMethods()) {
 						if (Modifier.isPublic(method.getModifiers()) && (method.getName().startsWith("get") || method.getName().startsWith("is"))) {
 							// it is possible to have 1 parameter which is a varargs in which case we can call the get without any data
-							boolean isVarargsGetter = method.getParameterCount() == 1 && method.isVarArgs();
+							boolean isVarargsGetter = method.getParameterTypes().length == 1 && method.isVarArgs();
 							// only methods that do not take parameters
 							if ((!isVarargsGetter || !allowVarargsGetters) && method.getParameterTypes().length > 0)
 								continue;

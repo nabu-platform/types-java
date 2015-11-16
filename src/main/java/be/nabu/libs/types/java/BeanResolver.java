@@ -30,12 +30,6 @@ public class BeanResolver implements DefinedTypeResolver {
 		return instance;
 	}
 	
-	public BeanResolver() {
-		if (instance == null) {
-			instance = this;
-		}
-	}
-		
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public DefinedType resolve(Class<?> clazz) {
 		if (!resolvedClasses.containsKey(clazz)) {
@@ -50,42 +44,50 @@ public class BeanResolver implements DefinedTypeResolver {
 		if (!resolved.containsKey(id)) {
 			synchronized(this) {
 				if (!resolved.containsKey(id)) {
-					Class<?> targetType = null;
-					// first check domain object factories
-					for (DomainObjectFactory factory : objectFactories) {
-						try {
-							targetType = factory.loadClass(id);
-							if (targetType != null) {
-								factoryResolutions.get(factory).add(id);
-								break;
-							}
-						}
-						catch (ClassNotFoundException e) {
-							// ignore
+					for (Class<?> resolvedClass : resolvedClasses.keySet()) {
+						if (resolvedClass.getName().equals(id)) {
+							resolved.put(id, resolvedClasses.get(resolvedClass));
+							break;
 						}
 					}
-					if (targetType == null) {
-						try {
-							// first try the classloader for this class, you may have enabled DynamicImport-Package
-							// however that setting is useless if you don't use the classloader for this bundle
-							targetType = getClass().getClassLoader().loadClass(id);
-						}
-						catch (ClassNotFoundException e) {
-							// then try the thread classloader, it may be correct
+					if (!resolved.containsKey(id)) {
+						Class<?> targetType = null;
+						// first check domain object factories
+						for (DomainObjectFactory factory : objectFactories) {
 							try {
-								targetType = Thread.currentThread().getContextClassLoader().loadClass(id);
+								targetType = factory.loadClass(id);
+								if (targetType != null) {
+									factoryResolutions.get(factory).add(id);
+									break;
+								}
 							}
-							catch (ClassNotFoundException f) {
-								return null;
+							catch (ClassNotFoundException e) {
+								// ignore
 							}
 						}
-					}
-					BeanType<?> beanType = new BeanType(targetType);
-					if (beanType.isSimpleType()) {
-						resolved.put(id, new SimpleBeanType(beanType));
-					}
-					else {
-						resolved.put(id, beanType);
+						if (targetType == null) {
+							try {
+								// first try the classloader for this class, you may have enabled DynamicImport-Package
+								// however that setting is useless if you don't use the classloader for this bundle
+								targetType = getClass().getClassLoader().loadClass(id);
+							}
+							catch (ClassNotFoundException e) {
+								// then try the thread classloader, it may be correct
+								try {
+									targetType = Thread.currentThread().getContextClassLoader().loadClass(id);
+								}
+								catch (ClassNotFoundException f) {
+									return null;
+								}
+							}
+						}
+						BeanType<?> beanType = new BeanType(targetType);
+						if (beanType.isSimpleType()) {
+							resolved.put(id, new SimpleBeanType(beanType));
+						}
+						else {
+							resolved.put(id, beanType);
+						}
 					}
 				}
 			}

@@ -345,8 +345,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 							
 							if (method.getAnnotation(XmlValue.class) != null)
 								valueElement = element;
-							// by default nothing is nillable, however in java the default is true
-							// so unless specified otherwise, always set this property
+							// make sure the nillable is explicitly set correctly
 							if (!isNative && isNillable(method))
 								element.setProperty(new ValueImpl(NillableProperty.getInstance(), true));
 						

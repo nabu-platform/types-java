@@ -106,7 +106,6 @@ public class BeanResolver implements DefinedTypeResolver {
 	}
 	
 	public synchronized void addFactory(DomainObjectFactory factory) {
-		System.out.println("[" + this + " - " + this.getClass().getClassLoader() + "] Registering factory " + factory);
 		factoryResolutions.put(factory, new ArrayList<String>());
 		objectFactories.add(factory);
 	}

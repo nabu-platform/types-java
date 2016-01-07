@@ -1,8 +1,10 @@
 package be.nabu.libs.types.java;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -50,7 +52,15 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		if (instance instanceof Class) {
 			throw new IllegalArgumentException("Can not wrap around java.lang.Class");
 		}
-		this.definition = (BeanType<T>) BeanResolver.getInstance().resolve((Class<T>) instance.getClass());
+		if (Proxy.isProxyClass(instance.getClass())) {
+			InvocationHandler invocationHandler = Proxy.getInvocationHandler(instance);
+			if (invocationHandler instanceof BeanInterfaceInstance) {
+				this.definition = (BeanType<T>) ((BeanInterfaceInstance) invocationHandler).getOriginalType();
+			}
+		}
+		if (this.definition == null) {
+			this.definition = (BeanType<T>) BeanResolver.getInstance().resolve((Class<T>) instance.getClass());
+		}
 		this.instance = instance;
 	}
 	

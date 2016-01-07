@@ -11,6 +11,12 @@ public class BeanInterfaceInstance implements InvocationHandler, Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	private Map<String, Object> values = new HashMap<String, Object>();
+
+	private BeanType<?> originalType;
+
+	public BeanInterfaceInstance(BeanType<?> originalType) {
+		this.originalType = originalType;
+	}
 	
 	@Override
 	public Object invoke(Object instance, Method method, Object[] args) throws Throwable {
@@ -42,4 +48,9 @@ public class BeanInterfaceInstance implements InvocationHandler, Serializable {
 		else
 			return name.substring(0, 1).toLowerCase() + name.substring(1);
 	}
+
+	public BeanType<?> getOriginalType() {
+		return originalType;
+	}
+	
 }

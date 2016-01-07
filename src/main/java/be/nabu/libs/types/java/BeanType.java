@@ -346,13 +346,20 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 							if (method.getAnnotation(XmlValue.class) != null)
 								valueElement = element;
 							// make sure the nillable is explicitly set correctly
-							if (!isNative && isNillable(method))
+							boolean nillable = false;
+							if (!isNative && isNillable(method)) {
 								element.setProperty(new ValueImpl(NillableProperty.getInstance(), true));
+								nillable = true;
+							}
 						
 							Integer minOccurs = getMinOccurs(method);
 							Integer maxOccurs = getMaxOccurs(method);
-							if (minOccurs != null)
+							if (minOccurs != null) {
 								element.setProperty(new ValueImpl(MinOccursProperty.getInstance(), minOccurs));
+							}
+							else if (nillable) {
+								element.setProperty(new ValueImpl(MinOccursProperty.getInstance(), 0));
+							}
 							if (maxOccurs != null)
 								element.setProperty(new ValueImpl(MaxOccursProperty.getInstance(), maxOccurs));
 							else if (isList)
@@ -615,7 +622,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 
 	@Override
 	public ComplexType getSuperType() {
-		if (getBeanClass().isInterface() && getBeanClass().getInterfaces().length > 0) {
+		if ((getBeanClass().isInterface() || getBeanClass().getSuperclass() == null) && getBeanClass().getInterfaces().length > 0) {
 			return (ComplexType) BeanResolver.getInstance().resolve(getBeanClass().getInterfaces()[0]);
 		}
 		return getBeanClass().getSuperclass() == null ? null : (ComplexType) BeanResolver.getInstance().resolve(getBeanClass().getSuperclass());
@@ -624,7 +631,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	@Override
 	public BeanInstance<T> newInstance() {
 		if (getBeanClass().isInterface())
-			return new BeanInstance<T>(this, Proxy.newProxyInstance(getBeanClass().getClassLoader(), new Class<?> [] { getBeanClass(), SneakyEditableBeanInstance.class }, new BeanInterfaceInstance()));
+			return new BeanInstance<T>(this, Proxy.newProxyInstance(getBeanClass().getClassLoader(), new Class<?> [] { getBeanClass(), SneakyEditableBeanInstance.class }, new BeanInterfaceInstance(this)));
 		else {
 			try {
 				return new BeanInstance<T>(this, getBeanClass().newInstance());
@@ -726,7 +733,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 		@SuppressWarnings("rawtypes")
 		@Override
 		protected ComplexContent convert(Object instance) {
-			return new BeanInstance(instance);
+			return instance == null ? null : new BeanInstance(instance);
 		}
 	
 	}

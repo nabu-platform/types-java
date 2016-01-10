@@ -160,6 +160,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 			synchronized(this) {
 				if (children == null) {
 					Map<String, Element<?>> children = new LinkedHashMap<String, Element<?>>();
+					Map<String, String> mappedNames = new HashMap<String, String>();
 					SimpleTypeWrapper wrapper = SimpleTypeWrapperFactory.getInstance().getWrapper();
 					// this only lists the methods that are actually implemented by this class, not those that are inherited
 					for (Method method : getBeanClass().getDeclaredMethods()) {
@@ -186,8 +187,11 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 							
 							logger.debug("Found getter for: {} in {}", name, getBeanClass());
 							
-							if (getIndicatedName(method) != null)
+							if (getIndicatedName(method) != null) {
+								String original = name;
 								name = getIndicatedName(method);
+								mappedNames.put(original, name);
+							}
 							
 							String namespace = getNamespace(method);
 		
@@ -398,7 +402,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 					}
 					String [] propOrder = getPropOrder(getBeanClass());
 					if (propOrder != null) {
-						children = orderChildren(children, propOrder);
+						children = orderChildren(children, propOrder, mappedNames);
 					}
 					this.children = children;
 				}
@@ -416,10 +420,13 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 		return null;
 	}
 	
-	private Map<String, Element<?>> orderChildren(Map<String, Element<?>> children, String [] propOrder) {
+	private Map<String, Element<?>> orderChildren(Map<String, Element<?>> children, String [] propOrder, Map<String, String> mappedNames) {
 		List<String> availableChildren = new ArrayList<String>(children.keySet());
 		Map<String, Element<?>> orderedChildren = new LinkedHashMap<String, Element<?>>();
 		for (String childName : propOrder) {
+			if (mappedNames.containsKey(childName) && availableChildren.contains(mappedNames.get(childName))) {
+				childName = mappedNames.get(childName);
+			}
 			availableChildren.remove(childName);
 			if (!children.containsKey(childName))
 				throw new IllegalArgumentException("The annotation 'propOrder' contains a child element that does not exist: " + childName + " !# " + children.keySet());

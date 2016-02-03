@@ -629,7 +629,8 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 
 	@Override
 	public ComplexType getSuperType() {
-		if ((getBeanClass().isInterface() || getBeanClass().getSuperclass() == null) && getBeanClass().getInterfaces().length > 0) {
+		// if we implement an interface and the direct parent is object, report the interface as the parent
+		if ((getBeanClass().isInterface() || getBeanClass().getSuperclass() == null || getBeanClass().getSuperclass().equals(Object.class)) && getBeanClass().getInterfaces().length > 0) {
 			return (ComplexType) BeanResolver.getInstance().resolve(getBeanClass().getInterfaces()[0]);
 		}
 		return getBeanClass().getSuperclass() == null ? null : (ComplexType) BeanResolver.getInstance().resolve(getBeanClass().getSuperclass());

@@ -748,11 +748,17 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 
 	@Override
 	public Value<?>[] getProperties() {
-		if (values == null) {
-			values = new ArrayList<Value<?>>(Arrays.asList(super.getProperties()));
-			// add enumeration constants
-			if (Enum.class.isAssignableFrom(getBeanClass()))
-				values.add(new ValueImpl<List<T>>(new EnumerationProperty<T>(), Arrays.asList(getBeanClass().getEnumConstants())));
+		if (!Enum.class.isAssignableFrom(getBeanClass())) {
+			return super.getProperties();
+		}
+		else if (values == null) {
+			synchronized(this) {
+				if (values == null) {
+					values = new ArrayList<Value<?>>(Arrays.asList(super.getProperties()));
+					// add enumeration constants
+					values.add(new ValueImpl<List<T>>(new EnumerationProperty<T>(), Arrays.asList(getBeanClass().getEnumConstants())));
+				}
+			}
 		}
 		return values.toArray(new Value[values.size()]);
 	}

@@ -79,7 +79,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 
 	@Override
 	public void set(String path, Object value) {
-		set(new ParsedPath(path), value);
+		set(ParsedPath.parse(path), value);
 	}
 	
 	public void setConverter(Converter converter) {
@@ -235,7 +235,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 	
 	@Override
 	public Object get(String path) {
-		return get(new ParsedPath(path));
+		return get(ParsedPath.parse(path));
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })

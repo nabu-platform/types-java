@@ -247,7 +247,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 			throw new IllegalArgumentException("The field " + pathName + " is not an attribute");
 		}
 		if (definition == null)
-			throw new IllegalArgumentException("The field " + pathName + " does not exist in " + getType().getName());
+			throw new IllegalArgumentException("The field " + pathName + " does not exist in " + getType().getBeanClass().getName());
 		if (path.getIndex() != null && !definition.getType().isList(definition.getProperties()))
 			throw new IllegalArgumentException("The field " + pathName + " is not a list");
 		if (path.getChildPath() != null && !(definition.getType() instanceof ComplexType))

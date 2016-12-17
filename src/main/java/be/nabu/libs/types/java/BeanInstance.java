@@ -26,6 +26,7 @@ import be.nabu.libs.types.api.CollectionHandler;
 import be.nabu.libs.types.api.CollectionHandlerProvider;
 import be.nabu.libs.types.api.ComplexContent;
 import be.nabu.libs.types.api.ComplexType;
+import be.nabu.libs.types.api.DefinedSimpleType;
 import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.TypeConverter;
 import be.nabu.libs.types.api.TypeInstance;
@@ -46,7 +47,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 	private CollectionHandler handler;
 	private TypeConverter simpleTypeConverter;
 	private Converter converter;
-
+	
 	@SuppressWarnings({ "unchecked" })
 	public BeanInstance(Object instance) {
 		if (instance instanceof Class) {
@@ -168,23 +169,31 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				Object listObject = getType().getGetter(pathName).invoke(instance);
 				Object parsedIndex = collectionHandler.unmarshalIndex(path.getIndex());
 				// does not yet exist, we need to initialize it
-				if (listObject == null) {
+				if (listObject == null && (CREATE_PARENT_FOR_NULL_VALUE || value != null)) {
 					// the size only matters if it is integer-based index
 					listObject = collectionHandler.create(actualType, parsedIndex instanceof Integer ? ((Integer) parsedIndex) + 1 : 1);
 					// set it in the object
 					setValue(instance, pathName, listObject);
-				}				
-				// we need to update locally
-				if (path.getChildPath() == null) {
-					value = convert(value, collectionHandler.getComponentType(getType().getGenericType(pathName)), definition);
-					setValue(instance, pathName, collectionHandler.set(listObject, parsedIndex, value));
 				}
-				// otherwise we need to recurse
-				else {
-					Object singleObject = collectionHandler.get(listObject, parsedIndex);
-					if (!(singleObject instanceof ComplexContent))
-						singleObject = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(singleObject);
-					((ComplexContent) singleObject).set(path.getChildPath().toString(), value);
+				if (listObject != null) {
+					// we need to update locally
+					if (path.getChildPath() == null) {
+						value = convert(value, collectionHandler.getComponentType(getType().getGenericType(pathName)), definition);
+						setValue(instance, pathName, collectionHandler.set(listObject, parsedIndex, value));
+					}
+					// otherwise we need to recurse
+					else {
+						Object singleObject = collectionHandler.get(listObject, parsedIndex);
+						if (singleObject == null && (CREATE_PARENT_FOR_NULL_VALUE || value != null)) {
+							singleObject = getType().getActualType(pathName).newInstance();
+							collectionHandler.set(listObject, parsedIndex, singleObject);
+						}
+						if (singleObject != null) {
+							if (!(singleObject instanceof ComplexContent))
+								singleObject = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(singleObject);
+							((ComplexContent) singleObject).set(path.getChildPath().toString(), value);
+						}
+					}
 				}
 			}
 			// just update the field
@@ -195,13 +204,15 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 			else {
 				// we need to recurse
 				Object singleObject = getType().getGetter(pathName).invoke(instance);
-				if (singleObject == null) {
+				if (singleObject == null && (CREATE_PARENT_FOR_NULL_VALUE || value != null)) {
 					singleObject = getType().getActualType(pathName).newInstance();
 					setValue(instance, pathName, singleObject);
 				}
-				if (!(singleObject instanceof ComplexContent))
-					singleObject = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(singleObject);
-				((ComplexContent) singleObject).set(path.getChildPath().toString(), value);
+				if (singleObject != null) {
+					if (!(singleObject instanceof ComplexContent))
+						singleObject = ComplexContentWrapperFactory.getInstance().getWrapper().wrap(singleObject);
+					((ComplexContent) singleObject).set(path.getChildPath().toString(), value);
+				}
 			}
 		}
 		catch (InvocationTargetException e) {
@@ -223,10 +234,17 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		if (value instanceof ComplexContent) {
 			value = TypeUtils.getAsBean((ComplexContent) value, targetClass);
 		}
+		// this logic is slightly out of sync with structure instance logic
 		else if (!targetClass.isAssignableFrom(value.getClass())) {
 			// need to wrap class
-			TypeInstance targetType = new BaseTypeInstance(SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(value.getClass()));
-			value = TypeConverterFactory.getInstance().getConverter().convert(value, targetType, definition);
+			DefinedSimpleType<? extends Object> wrap = SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(value.getClass());
+			if (wrap == null) {
+				value = ConverterFactory.getInstance().getConverter().convert(value, targetClass);
+			}
+			else {
+				TypeInstance targetType = new BaseTypeInstance(wrap);
+				value = TypeConverterFactory.getInstance().getConverter().convert(value, targetType, definition);
+			}
 		}
 		if (value == null)
 			throw new IllegalArgumentException("The value can not be converted from " + originalClass + " to " + targetClass);

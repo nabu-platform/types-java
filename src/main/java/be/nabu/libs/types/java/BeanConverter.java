@@ -28,7 +28,7 @@ public class BeanConverter implements TypeConverter {
 	@Override
 	public boolean canConvert(TypeInstance from, TypeInstance to) {
 		return from.getType() instanceof BeanType && to.getType() instanceof BeanType
-				&& ((BeanType) to).getBeanClass().isAssignableFrom(((BeanType) from).getBeanClass());
+				&& ((BeanType) to.getType()).getBeanClass().isAssignableFrom(((BeanType) from.getType()).getBeanClass());
 	}
 
 }

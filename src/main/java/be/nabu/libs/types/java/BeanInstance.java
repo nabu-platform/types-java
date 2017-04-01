@@ -226,29 +226,50 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		}
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Object convert(Object value, Class<?> targetClass, Element<?> definition) {
 		if (value == null)
 			return null;
 		Class<?> originalClass = value.getClass();
+		Object converted = null;
 		// if it is complex content, we might be able to proxy it
 		if (value instanceof ComplexContent) {
-			value = TypeUtils.getAsBean((ComplexContent) value, targetClass);
+			converted = TypeUtils.getAsBean((ComplexContent) value, targetClass);
+		}
+		else if (targetClass.isAssignableFrom(value.getClass())) {
+			converted = value;
 		}
 		// this logic is slightly out of sync with structure instance logic
-		else if (!targetClass.isAssignableFrom(value.getClass())) {
+		else {
 			// need to wrap class
 			DefinedSimpleType<? extends Object> wrap = SimpleTypeWrapperFactory.getInstance().getWrapper().wrap(value.getClass());
 			if (wrap == null) {
-				value = ConverterFactory.getInstance().getConverter().convert(value, targetClass);
+				converted = ConverterFactory.getInstance().getConverter().convert(value, targetClass);
 			}
 			else {
 				TypeInstance targetType = new BaseTypeInstance(wrap);
-				value = TypeConverterFactory.getInstance().getConverter().convert(value, targetType, definition);
+				converted = TypeConverterFactory.getInstance().getConverter().convert(value, targetType, definition);
 			}
 		}
-		if (value == null)
+		if (converted == null && !definition.getType().isList(definition.getProperties())) {
+			CollectionHandlerProvider handler = CollectionHandlerFactory.getInstance().getHandler().getHandler(value.getClass());
+			if (handler != null) {
+				Collection collection = handler.getAsCollection(value);
+				if (collection.size() == 1) {
+					Object next = collection.iterator().next();
+					return convert(next, targetClass, definition);
+				}
+				else if (collection.size() == 0) {
+					return null;
+				}
+				else {
+					throw new IllegalArgumentException("The non-empty collection '" + value + "' for field '" + definition.getName() + "' can not be converted from " + originalClass + " to the single item of type " + targetClass);		
+				}
+			}
+		}
+		if (converted == null)
 			throw new IllegalArgumentException("The value can not be converted from " + originalClass + " to " + targetClass);
-		return value;
+		return converted;
 	}
 	
 	@Override

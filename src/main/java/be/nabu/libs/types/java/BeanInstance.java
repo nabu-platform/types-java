@@ -20,7 +20,6 @@ import be.nabu.libs.types.ParsedPath;
 import be.nabu.libs.types.SimpleTypeWrapperFactory;
 import be.nabu.libs.types.TypeConverterFactory;
 import be.nabu.libs.types.TypeUtils;
-import be.nabu.libs.types.api.Attribute;
 import be.nabu.libs.types.api.BeanConvertible;
 import be.nabu.libs.types.api.CollectionHandler;
 import be.nabu.libs.types.api.CollectionHandlerProvider;
@@ -134,7 +133,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				}
 			}
 			else {
-				throw new RuntimeException("No setter found for field '" + field + "' and object is not sneaky editable");
+				throw new RuntimeException("No setter found for field '" + field + "' and object '" + value + "' is not sneaky editable");
 			}
 		}
 		else {
@@ -147,9 +146,6 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		boolean isAttribute = path.getName().startsWith("@");
 		String pathName = isAttribute ? path.getName().substring(1) : path.getName();
 		Element<?> definition = getType().get(pathName);
-		if (isAttribute && !(definition instanceof Attribute)) {
-			throw new IllegalArgumentException("The field " + pathName + " is not an attribute");
-		}
 		
 		if (definition == null)
 			throw new IllegalArgumentException("The field " + pathName + " does not exist in " + getType().getName());
@@ -185,7 +181,9 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 					else {
 						Object singleObject = collectionHandler.get(listObject, parsedIndex);
 						if (singleObject == null && (CREATE_PARENT_FOR_NULL_VALUE || value != null)) {
-							singleObject = getType().getActualType(pathName).newInstance();
+//							singleObject = getType().getActualType(pathName).newInstance();
+							// this makes sure we can dynamically generate proxies etc
+							singleObject = new BeanType(collectionHandler.getComponentType(getType().getGenericType(pathName))).newInstance().getUnwrapped();
 							collectionHandler.set(listObject, parsedIndex, singleObject);
 						}
 						if (singleObject != null) {
@@ -282,9 +280,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		boolean isAttribute = path.getName().startsWith("@");
 		String pathName = isAttribute ? path.getName().substring(1) : path.getName();
 		Element<?> definition = getType().get(pathName);
-		if (isAttribute && !(definition instanceof Attribute)) {
-			throw new IllegalArgumentException("The field " + pathName + " is not an attribute");
-		}
+
 		if (definition == null)
 			throw new IllegalArgumentException("The field " + pathName + " does not exist in " + getType().getBeanClass().getName());
 		if (path.getIndex() != null && !definition.getType().isList(definition.getProperties()))

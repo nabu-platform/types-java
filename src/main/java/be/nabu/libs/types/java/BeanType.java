@@ -697,6 +697,9 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 
 	@Override
 	public String getId() {
+		if (Proxy.isProxyClass(getBeanClass()) && getBeanClass().getInterfaces().length > 0) {
+			return getBeanClass().getInterfaces()[0].getName();
+		}
 		return getBeanClass().getName();
 	}
 

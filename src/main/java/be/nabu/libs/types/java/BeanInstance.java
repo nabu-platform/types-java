@@ -309,13 +309,13 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				return new BeanInstance((BeanType<?>) definition.getType(), object).get(path.getChildPath());
 		}
 		catch (InvocationTargetException e) {
-			throw new RuntimeException("Can not access path: " + path, e);
+			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass(), e);
 		} 
 		catch (IllegalAccessException e) {
-			throw new RuntimeException("Can not access path: " + path, e);
+			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass(), e);
 		}
 		catch (RuntimeException e) {
-			throw new RuntimeException("Can not access path: " + path + " using " + getter.getDeclaringClass().getClassLoader() + " on " + instance.getClass().getClassLoader(), e);
+			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass() + " using " + getter.getDeclaringClass().getClassLoader() + " on " + instance.getClass().getClassLoader(), e);
 		}
 	}
 

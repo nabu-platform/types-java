@@ -142,7 +142,11 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 	
 	Type getGenericType(String name) {
-		return getGetter(name).getGenericReturnType();
+		Method getter = getGetter(name);
+		if (getter == null) {
+			throw new IllegalArgumentException("Could not find getter for: " + name);
+		}
+		return getter.getGenericReturnType();
 	}
 	
 	public Class<T> getBeanClass() {

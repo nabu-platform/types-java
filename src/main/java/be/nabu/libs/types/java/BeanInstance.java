@@ -133,7 +133,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				}
 			}
 			else {
-				throw new RuntimeException("No setter found for field '" + field + "' and object '" + value + "' is not sneaky editable");
+				throw new RuntimeException("No setter found for field '" + field + "' and object '" + instance + "' (" + getType() + ") is not sneaky editable");
 			}
 		}
 		else {

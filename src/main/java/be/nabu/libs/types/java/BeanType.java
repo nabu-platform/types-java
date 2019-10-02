@@ -55,6 +55,7 @@ import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.Group;
 import be.nabu.libs.types.api.SimpleType;
 import be.nabu.libs.types.api.SimpleTypeWrapper;
+import be.nabu.libs.types.api.SneakyEditableBeanInstance;
 import be.nabu.libs.types.base.AttributeImpl;
 import be.nabu.libs.types.base.BaseType;
 import be.nabu.libs.types.base.ComplexElementImpl;

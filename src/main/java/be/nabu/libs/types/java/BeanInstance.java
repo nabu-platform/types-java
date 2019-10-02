@@ -27,6 +27,7 @@ import be.nabu.libs.types.api.ComplexContent;
 import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.api.DefinedSimpleType;
 import be.nabu.libs.types.api.Element;
+import be.nabu.libs.types.api.SneakyEditableBeanInstance;
 import be.nabu.libs.types.api.TypeConverter;
 import be.nabu.libs.types.api.TypeInstance;
 import be.nabu.libs.types.api.WrappedComplexContent;
@@ -203,7 +204,9 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				// we need to recurse
 				Object singleObject = getType().getGetter(pathName).invoke(instance);
 				if (singleObject == null && (CREATE_PARENT_FOR_NULL_VALUE || value != null)) {
-					singleObject = getType().getActualType(pathName).newInstance();
+					// this supports interfaces!
+					singleObject = new BeanType(getType().getActualType(pathName)).newInstance().getUnwrapped();
+//					singleObject = getType().getActualType(pathName).newInstance();
 					setValue(instance, pathName, singleObject);
 				}
 				if (singleObject != null) {
@@ -217,9 +220,6 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 			throw new RuntimeException(e);
 		} 
 		catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
-		catch (InstantiationException e) {
 			throw new RuntimeException(e);
 		}
 	}

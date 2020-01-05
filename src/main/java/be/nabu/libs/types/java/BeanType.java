@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -409,6 +410,9 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 					if (propOrder != null) {
 						children = orderChildren(children, propOrder, mappedNames);
 					}
+					else {
+						children = orderChildren(children, mappedNames);
+					}
 					this.children = children;
 				}
 			}
@@ -423,6 +427,13 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 			}
 		}
 		return null;
+	}
+	
+	// by default we order alphabetically to be predictable and user friendly
+	private Map<String, Element<?>> orderChildren(Map<String, Element<?>> children, Map<String, String> mappedNames) {
+		ArrayList<String> names = new ArrayList<String>(children.keySet());
+		Collections.sort(names);
+		return orderChildren(children, names.toArray(new String[names.size()]), mappedNames);
 	}
 	
 	private Map<String, Element<?>> orderChildren(Map<String, Element<?>> children, String [] propOrder, Map<String, String> mappedNames) {

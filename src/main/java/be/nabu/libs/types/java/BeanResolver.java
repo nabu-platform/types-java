@@ -33,7 +33,11 @@ public class BeanResolver implements DefinedTypeResolver {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public DefinedType resolve(Class<?> clazz) {
 		if (!resolvedClasses.containsKey(clazz)) {
-			resolvedClasses.put(clazz, new BeanType(clazz));
+			synchronized(this) {
+				if (!resolvedClasses.containsKey(clazz)) {
+					resolvedClasses.put(clazz, new BeanType(clazz));
+				}
+			}
 		}
 		return resolvedClasses.get(clazz);
 	}

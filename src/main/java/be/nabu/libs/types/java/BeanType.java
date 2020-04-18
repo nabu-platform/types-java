@@ -57,6 +57,8 @@ import be.nabu.libs.types.api.Group;
 import be.nabu.libs.types.api.SimpleType;
 import be.nabu.libs.types.api.SimpleTypeWrapper;
 import be.nabu.libs.types.api.SneakyEditableBeanInstance;
+import be.nabu.libs.types.api.annotation.ComplexTypeDescriptor;
+import be.nabu.libs.types.api.annotation.Field;
 import be.nabu.libs.types.base.AttributeImpl;
 import be.nabu.libs.types.base.BaseType;
 import be.nabu.libs.types.base.ComplexElementImpl;
@@ -64,9 +66,11 @@ import be.nabu.libs.types.base.SimpleElementImpl;
 import be.nabu.libs.types.base.ValueImpl;
 import be.nabu.libs.types.properties.AttributeQualifiedDefaultProperty;
 import be.nabu.libs.types.properties.CollectionHandlerProviderProperty;
+import be.nabu.libs.types.properties.CollectionNameProperty;
 import be.nabu.libs.types.properties.ElementQualifiedDefaultProperty;
 import be.nabu.libs.types.properties.EnumerationProperty;
 import be.nabu.libs.types.properties.FormatProperty;
+import be.nabu.libs.types.properties.GeneratedProperty;
 import be.nabu.libs.types.properties.LengthProperty;
 import be.nabu.libs.types.properties.MaxInclusiveProperty;
 import be.nabu.libs.types.properties.MaxLengthProperty;
@@ -78,6 +82,7 @@ import be.nabu.libs.types.properties.NameProperty;
 import be.nabu.libs.types.properties.NamespaceProperty;
 import be.nabu.libs.types.properties.NillableProperty;
 import be.nabu.libs.types.properties.PatternProperty;
+import be.nabu.libs.types.properties.PrimaryKeyProperty;
 import be.nabu.libs.types.properties.QualifiedProperty;
 import be.nabu.libs.types.properties.TimeBlock;
 import be.nabu.libs.types.properties.TimeBlockProperty;
@@ -122,6 +127,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 		this.includeChildrenNotInPropOrder = includeChildrenNotInPropOrder;
 		loadName();
 		loadNamespace();
+		loadCollectionName();
 	}
 	
 	public void setCollectionHandler(CollectionHandler handler) {
@@ -309,6 +315,14 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 										element.setProperty(new ValueImpl(new MaxLengthProperty(), maxLength));
 								}
 								
+								if (isGenerated(method)) {
+									element.setProperty(new ValueImpl<Boolean>(GeneratedProperty.getInstance(), true));
+								}
+								
+								if (isPrimary(method)) {
+									element.setProperty(new ValueImpl<Boolean>(PrimaryKeyProperty.getInstance(), true));
+								}
+								
 								String pattern = getPattern(method);
 								if (pattern != null)
 									element.setProperty(new ValueImpl(new PatternProperty(), pattern));
@@ -467,15 +481,28 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 			return false;
 	}
 
+	protected void loadCollectionName() {
+		ComplexTypeDescriptor descriptor = getBeanClass().getAnnotation(ComplexTypeDescriptor.class);
+		if (descriptor != null && descriptor.collectionName() != null && !descriptor.collectionName().trim().isEmpty()) {
+			setProperty(new ValueImpl<String>(CollectionNameProperty.getInstance(), descriptor.collectionName()));
+		}
+	}
+	
 	protected void loadName() {
-		XmlRootElement annotation = getBeanClass().getAnnotation(XmlRootElement.class);
-		if (annotation == null || annotation.name().equals(NamespaceProperty.DEFAULT_NAMESPACE)) {
-			String name = getBeanClass().getName().replaceAll(".*\\.", "");
-			name = name.substring(0, 1).toLowerCase() + name.substring(1);
-			setProperty(new ValueImpl<String>(new NameProperty(), name));
+		ComplexTypeDescriptor descriptor = getBeanClass().getAnnotation(ComplexTypeDescriptor.class);
+		if (descriptor != null && descriptor.name() != null && !descriptor.name().trim().isEmpty()) {
+			setProperty(new ValueImpl<String>(NameProperty.getInstance(), descriptor.name()));
 		}
 		else {
-			setProperty(new ValueImpl<String>(new NameProperty(), annotation.name()));
+			XmlRootElement annotation = getBeanClass().getAnnotation(XmlRootElement.class);
+			if (annotation == null || annotation.name() == null || annotation.name().equals(NamespaceProperty.DEFAULT_NAMESPACE) || annotation.name().trim().isEmpty()) {
+				String name = getBeanClass().getName().replaceAll(".*\\.", "");
+				name = name.substring(0, 1).toLowerCase() + name.substring(1);
+				setProperty(new ValueImpl<String>(NameProperty.getInstance(), name));
+			}
+			else {
+				setProperty(new ValueImpl<String>(NameProperty.getInstance(), annotation.name()));
+			}
 		}
 	}
 	
@@ -489,14 +516,20 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 
 	protected void loadNamespace() {
-		XmlRootElement rootAnnotation = getBeanClass().getAnnotation(XmlRootElement.class);
-		if (rootAnnotation != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(rootAnnotation.namespace())) {
-			setProperty(new ValueImpl<String>(NamespaceProperty.getInstance(), rootAnnotation.namespace()));
+		ComplexTypeDescriptor descriptor = getBeanClass().getAnnotation(ComplexTypeDescriptor.class);
+		if (descriptor != null && descriptor.namespace() != null && !descriptor.namespace().trim().isEmpty()) {
+			setProperty(new ValueImpl<String>(NamespaceProperty.getInstance(), descriptor.namespace()));
 		}
 		else {
-			XmlSchema annotation = getBeanClass().getPackage() == null ? null : getBeanClass().getPackage().getAnnotation(XmlSchema.class);
-			if (annotation != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(annotation.namespace())) {
-				setProperty(new ValueImpl<String>(NamespaceProperty.getInstance(), annotation.namespace()));
+			XmlRootElement rootAnnotation = getBeanClass().getAnnotation(XmlRootElement.class);
+			if (rootAnnotation != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(rootAnnotation.namespace())) {
+				setProperty(new ValueImpl<String>(NamespaceProperty.getInstance(), rootAnnotation.namespace()));
+			}
+			else {
+				XmlSchema annotation = getBeanClass().getPackage() == null ? null : getBeanClass().getPackage().getAnnotation(XmlSchema.class);
+				if (annotation != null && !NamespaceProperty.DEFAULT_NAMESPACE.equals(annotation.namespace())) {
+					setProperty(new ValueImpl<String>(NamespaceProperty.getInstance(), annotation.namespace()));
+				}
 			}
 		}
 	}
@@ -517,11 +550,19 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 	
 	protected String [] getPropOrder(Class<?> clazz) {
+		ComplexTypeDescriptor descriptor = clazz.getAnnotation(ComplexTypeDescriptor.class);
+		if (descriptor != null && descriptor.propOrder() != null && descriptor.propOrder().length > 0) {
+			return descriptor.propOrder();
+		}
 		XmlType annotation = clazz.getAnnotation(XmlType.class);
 		return annotation == null ? null : annotation.propOrder();
 	}
 	
 	protected String getIndicatedName(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		if (field != null && !field.name().trim().isEmpty()) {
+			return field.name();
+		}
 		XmlElement elementAnnotation = method.getAnnotation(XmlElement.class);
 		String name = elementAnnotation == null ? null : elementAnnotation.name();
 		if (name == null) {
@@ -532,6 +573,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 	
 	protected String getNamespace(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		if (field != null && !field.namespace().trim().isEmpty()) {
+			return field.namespace();
+		}
 		XmlElement elementAnnotation = method.getAnnotation(XmlElement.class);
 		String namespace = elementAnnotation == null ? null : elementAnnotation.namespace();
 		if (namespace == null) {
@@ -550,14 +595,37 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 
 	protected boolean isNillable(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		// must work correctly together with not null
+		if (field != null && field.minOccurs() != 0) {
+			return false;
+		}
 		return method.getAnnotation(NotNull.class) == null;
 	}
 	
+	protected boolean isGenerated(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		return field != null && field.generated();
+	}
+	
+	protected boolean isPrimary(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		return field != null && field.primary();
+	}
+	
 	protected Long getMin(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		if (field != null && field.min() != 0) {
+			return field.min();
+		}
 		Min annotation = method.getAnnotation(Min.class);
 		return annotation == null ? null : annotation.value();
 	}
 	protected Long getMax(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		if (field != null && field.max() != 0) {
+			return field.max();
+		}
 		Max annotation = method.getAnnotation(Max.class);
 		return annotation == null ? null : annotation.value();
 	}
@@ -572,6 +640,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	
 	protected Integer getMinOccurs(Method method) {
 		if (Collection.class.isAssignableFrom(method.getReturnType()) || Object[].class.isAssignableFrom(method.getReturnType())) {
+			Field field = method.getAnnotation(Field.class);
+			if (field != null && field.minOccurs() != 0) {
+				return field.minOccurs();
+			}
 			Size annotation = method.getAnnotation(Size.class);
 			return annotation == null ? null : annotation.min();
 		}
@@ -580,6 +652,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 	protected Integer getMaxOccurs(Method method) {
 		if (Collection.class.isAssignableFrom(method.getReturnType()) || Object[].class.isAssignableFrom(method.getReturnType())) {
+			Field field = method.getAnnotation(Field.class);
+			if (field != null && field.maxOccurs() != 0) {
+				return field.maxOccurs();
+			}
 			Size annotation = method.getAnnotation(Size.class);
 			return annotation == null ? 0 : annotation.max();
 		}
@@ -588,6 +664,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 	protected Integer getMinLength(Method method) {
 		if (CharSequence.class.isAssignableFrom(method.getReturnType())) {
+			Field field = method.getAnnotation(Field.class);
+			if (field != null && field.minLength() != 0) {
+				return field.minLength();
+			}
 			Size annotation = method.getAnnotation(Size.class);
 			return annotation == null ? null : annotation.min();
 		}
@@ -596,6 +676,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 	protected Integer getMaxLength(Method method) {
 		if (CharSequence.class.isAssignableFrom(method.getReturnType())) {
+			Field field = method.getAnnotation(Field.class);
+			if (field != null && field.maxLength() != 0) {
+				return field.maxLength();
+			}
 			Size annotation = method.getAnnotation(Size.class);
 			return annotation == null ? null : annotation.max();
 		}
@@ -604,6 +688,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 	}
 	protected String getPattern(Method method) {
 		if (CharSequence.class.isAssignableFrom(method.getReturnType())) {
+			Field field = method.getAnnotation(Field.class);
+			if (field != null && !field.pattern().trim().isEmpty()) {
+				return field.pattern();
+			}
 			Pattern annotation = method.getAnnotation(Pattern.class);
 			return annotation == null ? null : annotation.regexp();
 		}

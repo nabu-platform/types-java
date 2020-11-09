@@ -375,6 +375,9 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 								element.setProperty(new ValueImpl(NillableProperty.getInstance(), true));
 								nillable = true;
 							}
+							else {
+								element.setProperty(new ValueImpl(NillableProperty.getInstance(), false));
+							}
 						
 							Integer minOccurs = getMinOccurs(method);
 							Integer maxOccurs = getMaxOccurs(method);

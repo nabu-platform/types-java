@@ -54,6 +54,7 @@ import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.api.DefinedType;
 import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.Group;
+import be.nabu.libs.types.api.JavaClassWrapper;
 import be.nabu.libs.types.api.SimpleType;
 import be.nabu.libs.types.api.SimpleTypeWrapper;
 import be.nabu.libs.types.api.SneakyEditableBeanInstance;
@@ -90,7 +91,7 @@ import be.nabu.libs.types.simple.Date.XSDFormat;
 import be.nabu.libs.validator.MultipleValidator;
 import be.nabu.libs.validator.api.Validator;
 
-public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexType, DefinedType {
+public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexType, DefinedType, JavaClassWrapper<T> {
 		
 	private boolean includeChildrenNotInPropOrder = false;
 	
@@ -872,5 +873,10 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 			}
 		}
 		return values.toArray(new Value[values.size()]);
+	}
+
+	@Override
+	public Class<T> getWrappedClass() {
+		return getBeanClass();
 	}
 }

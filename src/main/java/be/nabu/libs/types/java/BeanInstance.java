@@ -48,6 +48,11 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 	private TypeConverter simpleTypeConverter;
 	private Converter converter;
 	
+	// introduce @18-11-2020, throwing a hard exception is annoying
+	// at design time you shouldn't be accessing fields that don't exist unless you are doing something dynamic in which case the exception is seriously annoying
+	// it is also not in sync with other types like structure which simply return null
+	private static Boolean ignoreNonExistent = Boolean.parseBoolean(System.getProperty("bean.ignoreNonExistent", "true"));
+	
 	@SuppressWarnings({ "unchecked" })
 	public BeanInstance(Object instance) {
 		if (instance instanceof Class) {
@@ -228,6 +233,10 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 	private Object convert(Object value, Class<?> targetClass, Element<?> definition) {
 		if (value == null)
 			return null;
+		// we can't "convert" to object, it just accepts everything...
+		else if (Object.class.equals(targetClass)) {
+			return value;
+		}
 		Class<?> originalClass = value.getClass();
 		Object converted = null;
 		// if it is complex content, we might be able to proxy it
@@ -281,8 +290,14 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		String pathName = isAttribute ? path.getName().substring(1) : path.getName();
 		Element<?> definition = getType().get(pathName);
 
-		if (definition == null)
-			throw new IllegalArgumentException("The field " + pathName + " does not exist in " + getType().getBeanClass().getName());
+		if (definition == null) {
+			if (ignoreNonExistent) {
+				return null;
+			}
+			else {
+				throw new IllegalArgumentException("The field " + pathName + " does not exist in " + getType().getBeanClass().getName());
+			}
+		}
 		if (path.getIndex() != null && !definition.getType().isList(definition.getProperties()))
 			throw new IllegalArgumentException("The field " + pathName + " is not a list");
 		if (path.getChildPath() != null && !(definition.getType() instanceof ComplexType))

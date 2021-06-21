@@ -35,8 +35,21 @@ public class BeanInterfaceInstance implements InvocationHandler, Serializable {
 			values.put((String) args[0], args[1]);
 			return null;
 		}
+		// support for equals...
+		else if (name.equals("equals") && args.length == 1) {
+			// @2021-06-21: the actual equals is only true if they are the same object
+			// you can override that to have better logic, but because we are using proxies on interfaces, you (almost) definitely did not override the equals
+			// because we are working with beans, we could check deeper and see if the content is the same?
+			// however, in the past this just said "return instance.equals(args[0])" without checking deeper
+			// that could (in some cases) however end up in a recursive stackoverflowerror, presumably because you are equalling the item to itself?
+			// so for now, we'll do an identity check, in the future we might add a bean-aware depth check of all the values
+//			return instance.equals(args[0]);
+			return instance == args[0];
+		}
 		// allow for default methods like 'toString()'
 		else {
+			// not sure why it is "this" instead of "instance", but changing it now results in horrible recursion
+			// to be checked at a later date, just want to have support for equals for now
 			return method.invoke(this, args);
 		}
 	}

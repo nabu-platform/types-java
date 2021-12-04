@@ -305,6 +305,9 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 		
 		Method getter = getType().getGetter(pathName);
 		try {
+			if (!getter.isAccessible()) {
+				getter.setAccessible(true);
+			}
 			Object object = getter.getParameterTypes().length == 1
 				? getter.invoke(instance, new Object[] { Array.newInstance((Class<?>) getter.getParameterTypes()[0].getComponentType(), 0) }) 
 				: getter.invoke(instance);
@@ -324,10 +327,10 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				return new BeanInstance((BeanType<?>) definition.getType(), object).get(path.getChildPath());
 		}
 		catch (InvocationTargetException e) {
-			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass(), e);
+			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass() + " => " + getter, e);
 		} 
 		catch (IllegalAccessException e) {
-			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass(), e);
+			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass() + " => " + getter, e);
 		}
 		catch (RuntimeException e) {
 			throw new RuntimeException("Can not access path '" + path + "' in " + getUnwrapped().getClass() + " using " + getter.getDeclaringClass().getClassLoader() + " on " + instance.getClass().getClassLoader(), e);

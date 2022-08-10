@@ -274,6 +274,17 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				}
 			}
 		}
+		// if we have an iterable on one side and a java array on the other, try conversion
+		if (value instanceof Iterable && Object[].class.isAssignableFrom(targetClass)) {
+			// even if it is already a collection, we want to ensure object-compatibility before we contruct an array around it
+			Class<?> componentType = targetClass.getComponentType();
+			List result = new ArrayList();
+			// TODO: do we need to create a clone for the definition element and make it singular instead of a list?
+			for (Object single : (Iterable) value) {
+				result.add(convert(single, componentType, definition));
+			}
+			converted = result.toArray((Object[]) java.lang.reflect.Array.newInstance(componentType, result.size()));
+		}
 		if (converted == null)
 			throw new IllegalArgumentException("The value can not be converted from " + originalClass + " to " + targetClass);
 		return converted;

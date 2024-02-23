@@ -65,6 +65,7 @@ import be.nabu.libs.types.base.BaseType;
 import be.nabu.libs.types.base.ComplexElementImpl;
 import be.nabu.libs.types.base.SimpleElementImpl;
 import be.nabu.libs.types.base.ValueImpl;
+import be.nabu.libs.types.properties.AliasProperty;
 import be.nabu.libs.types.properties.AttributeQualifiedDefaultProperty;
 import be.nabu.libs.types.properties.CollectionHandlerProviderProperty;
 import be.nabu.libs.types.properties.CollectionNameProperty;
@@ -380,6 +381,11 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 								element.setProperty(new ValueImpl(NillableProperty.getInstance(), false));
 							}
 						
+							String alias = getAlias(method);
+							if (alias != null) {
+								element.setProperty(new ValueImpl<String>(AliasProperty.getInstance(), alias));
+							}
+							
 							Integer minOccurs = getMinOccurs(method);
 							Integer maxOccurs = getMaxOccurs(method);
 							if (minOccurs != null) {
@@ -438,6 +444,14 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 		return children;
 	}
 	
+	private String getAlias(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		if (field != null && !field.alias().trim().isEmpty()) {
+			return field.alias();
+		}
+		return null;
+	}
+
 	private Method getMethod(Class<?> clazz, String name) {
 		for (Method method : clazz.getDeclaredMethods()) {
 			if (method.getName().equals(name)) {

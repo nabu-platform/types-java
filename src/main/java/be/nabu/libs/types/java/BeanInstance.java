@@ -169,7 +169,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 					throw new IllegalArgumentException("Can not access the object " + pathName);
 				// get the current value
 				Object listObject = getType().getGetter(pathName).invoke(instance);
-				Object parsedIndex = collectionHandler.unmarshalIndex(path.getIndex());
+				Object parsedIndex = collectionHandler.unmarshalIndex(path.getIndex(), listObject);
 				// does not yet exist, we need to initialize it
 				if (listObject == null && (CREATE_PARENT_FOR_NULL_VALUE || value != null)) {
 					// the size only matters if it is integer-based index
@@ -326,7 +326,7 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 				CollectionHandlerProvider collectionHandler = getCollectionHandler().getHandler(object.getClass());
 				if (collectionHandler == null)
 					throw new IllegalArgumentException("Can not access the object " + pathName);
-				Object parsedIndex = collectionHandler.unmarshalIndex(path.getIndex());
+				Object parsedIndex = collectionHandler.unmarshalIndex(path.getIndex(), object);
 				object = collectionHandler.get(object, parsedIndex);
 			}
 			// we just need the field

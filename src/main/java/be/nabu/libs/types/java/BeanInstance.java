@@ -526,12 +526,17 @@ public class BeanInstance<T> implements BeanConvertible, WrappedComplexContent<T
 
 		@Override
 		public Object[] toArray() {
-			return toArray(null);
+			return internalToArray(null);
 		}
 
 		@SuppressWarnings("unchecked")
 		@Override
 		public <A> A[] toArray(A[] a) {
+			return internalToArray(a);
+		}
+		
+		// mismatches in later versions
+		private <A> A[] internalToArray(A[] a) {
 			A [] array = a != null && a.length >= list.size() ? a : (A[]) Array.newInstance(classType, list.size());
 			for (int i = 0; i < list.size(); i++)
 				array[i] = (A) list.get(i);

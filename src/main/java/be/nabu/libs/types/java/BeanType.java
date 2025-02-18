@@ -77,6 +77,7 @@ import be.nabu.libs.types.api.SimpleTypeWrapper;
 import be.nabu.libs.types.api.SneakyEditableBeanInstance;
 import be.nabu.libs.types.api.annotation.ComplexTypeDescriptor;
 import be.nabu.libs.types.api.annotation.Field;
+import be.nabu.libs.types.api.annotation.Transient;
 import be.nabu.libs.types.base.AttributeImpl;
 import be.nabu.libs.types.base.BaseType;
 import be.nabu.libs.types.base.ComplexElementImpl;
@@ -208,7 +209,7 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 							else if (method.getReturnType() == null)
 								continue;
 							// check that it shouldn't be ignored
-							else if (method.getAnnotation(XmlTransient.class) != null)
+							else if (method.getAnnotation(XmlTransient.class) != null || method.getAnnotation(Transient.class) != null)
 								continue;
 							
 							String name = method.getName().substring(method.getName().startsWith("get") ? 3 : 2).trim() ;

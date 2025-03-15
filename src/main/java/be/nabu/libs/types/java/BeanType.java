@@ -104,6 +104,7 @@ import be.nabu.libs.types.properties.NillableProperty;
 import be.nabu.libs.types.properties.PatternProperty;
 import be.nabu.libs.types.properties.PrimaryKeyProperty;
 import be.nabu.libs.types.properties.QualifiedProperty;
+import be.nabu.libs.types.properties.RawProperty;
 import be.nabu.libs.types.properties.TimeBlock;
 import be.nabu.libs.types.properties.TimeBlockProperty;
 import be.nabu.libs.types.simple.Date.XSDFormat;
@@ -417,6 +418,11 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 							else if (isList)
 								element.setProperty(new ValueImpl(MaxOccursProperty.getInstance(), 0));
 							
+							boolean raw = isRaw(method);
+							if (raw) {
+								element.setProperty(new ValueImpl<Boolean>(RawProperty.getInstance(), true));
+							}
+							
 							getters.put(element.getName(), method);
 							
 							children.put(element.getName(), element);
@@ -468,6 +474,11 @@ public class BeanType<T> extends BaseType<BeanInstance<T>> implements ComplexTyp
 			return field.alias();
 		}
 		return null;
+	}
+	
+	private boolean isRaw(Method method) {
+		Field field = method.getAnnotation(Field.class);
+		return field == null ? false : field.raw();
 	}
 
 	private Method getMethod(Class<?> clazz, String name) {
